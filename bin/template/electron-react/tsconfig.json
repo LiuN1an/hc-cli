@@ -1,0 +1,40 @@
+{
+    "compilerOptions": {
+        "experimentalDecorators": true,
+        "target": "ES2018",
+        "module": "CommonJS",
+        "lib": [
+            "dom",
+            "esnext"
+        ],
+        "declaration": true,
+        "declarationMap": true,
+        "jsx": "react",
+        "pretty": true,
+        "sourceMap": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "noImplicitReturns": true,
+        "moduleResolution": "Node",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "allowJs": true,
+        "resolveJsonModule": true,
+        "baseUrl": ".", // 查找非相对路径的模块的起始位置
+        "paths": {
+            "@assets/*": [
+                "resources/assets/*"
+            ]
+        }
+    },
+    "exclude": [
+        "node_modules",
+        "native",
+        "resources",
+        "src/main/preload.js"
+    ],
+    "include": [
+        "src/main",
+        "src/renderer"
+    ]
+}
