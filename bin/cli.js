@@ -7,6 +7,7 @@ const exec = require("child_process").exec;
 const fs = require("fs");
 
 const rootPath = "js-project-template";
+const templatePrefix = "hcTest";
 
 const generateNewName = (oldName) => {
   return Number(oldName) + 1 + "";
@@ -46,6 +47,18 @@ const copySync = (source, target, depth = 1) => {
   }
 };
 
+const updatePackageJson = (path, cb) => {
+  const file = `${path}/package.json`;
+  try {
+    const packageJson = fs.readFileSync(file);
+    const package = JSON.parse(packageJson);
+    const result = JSON.stringify(cb(package));
+    fs.writeFileSync(file, result);
+  } catch (e) {
+    console.error("update package.json error -> ", e);
+  }
+};
+
 program
   .command("create")
   .description("hkw cli")
@@ -72,12 +85,12 @@ program
       }
       const nameList = fs
         .readdirSync(pathRoute)
-        .filter((name) => name.startsWith("@test-"))
+        .filter((name) => name.startsWith(`${templatePrefix}-`))
         .map((name) => name.split("-")[1]);
-      let defaultName = "@test-0";
+      let defaultName = `${templatePrefix}-0`;
       if (nameList.length > 0) {
         nameList.sort();
-        defaultName = `@test-${generateNewName(
+        defaultName = `${templatePrefix}-${generateNewName(
           nameList[nameList.length - 1]
         )}`;
       }
@@ -117,11 +130,16 @@ program
         path.join(
           __dirname,
           `./template/${
-            type === "web" ? " react-webpack-tailwind" : "electron-react"
+            type === "web" ? "react-webpack-tailwind" : "electron-react"
           }`
         ),
         `${pathRoute}/${project}/`
       );
+
+      updatePackageJson(`${pathRoute}/${project}`, (json) => {
+        json["name"] = project;
+        return json;
+      });
       console.log(`cd ${pathRoute}/${project}`);
       console.log("npm install");
     });
