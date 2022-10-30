@@ -1,11 +1,12 @@
 # hc-cli
-Quickly cli-tool to create react/electron project templates in different configs on windows
+A collection for quickly cli-tool to create project templates in different configs on windows
 
-It provides 2 templates to create.
+Now, It provides 2 templates to create.
 
 - react-webpack5-tailwindcss
 - electron-webpack5-react-tailwindcss
 - ... and more to update
+
 ### Step
 
 cd to current directory, then
