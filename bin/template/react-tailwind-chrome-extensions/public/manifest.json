@@ -1,0 +1,36 @@
+{
+    "name": "tree idea",
+    "description": "a tool to record your idea in tree group structure",
+    "version": "1.0",
+    "manifest_version": 3,
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "js": [
+                "content.js",
+                "react.js"
+            ],
+            "css": [
+                "content.css"
+            ],
+            "matches": [
+                "<all_urls>"
+            ],
+            "run_at": "document_end"
+        }
+    ],
+    "permissions": [
+        "storage",
+        "tabs",
+        "scripting",
+        "activeTab"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ]
+}

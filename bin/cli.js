@@ -101,7 +101,7 @@ program
           name: "type",
           message: "请选择模板类型",
           default: "web",
-          choices: ["web", "electron"],
+          choices: ["web", "electron", "chrome-extension"],
         },
       ]);
       const { type } = answer;
@@ -126,13 +126,18 @@ program
       }
       fs.mkdirSync(`${pathRoute}/${project}`);
 
+      let templates = "";
+      switch (type) {
+        case "web":
+          templates = "react-webpack-tailwind";
+        case "electron":
+          templates = "electron-react";
+        case "chrome-extension":
+          templates = "react-tailwind-chrome-extensions";
+      }
+
       copySync(
-        path.join(
-          __dirname,
-          `./template/${
-            type === "web" ? "react-webpack-tailwind" : "electron-react"
-          }`
-        ),
+        path.join(__dirname, `./template/${templates}`),
         `${pathRoute}/${project}/`
       );
 
