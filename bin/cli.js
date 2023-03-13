@@ -98,13 +98,13 @@ program
       answer = await inquirer.prompt([
         {
           type: "list",
-          name: "type",
+          name: "choose_template",
           message: "请选择模板类型",
           default: "web",
           choices: ["web", "electron", "chrome-extension"],
         },
       ]);
-      const { type } = answer;
+      const { choose_template } = answer;
       let project;
       while (true) {
         answer = await inquirer.prompt([
@@ -127,13 +127,16 @@ program
       fs.mkdirSync(`${pathRoute}/${project}`);
 
       let templates = "";
-      switch (type) {
+      switch (choose_template) {
         case "web":
           templates = "react-webpack-tailwind";
+          break;
         case "electron":
           templates = "electron-react";
+          break;
         case "chrome-extension":
           templates = "react-tailwind-chrome-extensions";
+          break;
       }
 
       copySync(
