@@ -7,7 +7,7 @@
         "start": "webpack serve --mode=development --config webpack.dev.js",
         "build": "webpack --config webpack.pro.js"
     },
-    "author": "PeterH",
+    "author": "LiuN1an",
     "license": "MIT",
     "devDependencies": {
         "@babel/core": "^7.17.10",

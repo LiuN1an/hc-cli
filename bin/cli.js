@@ -127,6 +127,7 @@ program
       fs.mkdirSync(`${pathRoute}/${project}`);
 
       let templates = "";
+
       switch (choose_template) {
         case "web":
           templates = "react-webpack-tailwind";
@@ -139,10 +140,10 @@ program
           break;
       }
 
-      copySync(
-        path.join(__dirname, `./template/${templates}`),
-        `${pathRoute}/${project}/`
-      );
+      const source = path.join(__dirname, `./template/${templates}`);
+      const target = `${pathRoute}/${project}/`;
+
+      copySync(source, target);
 
       updatePackageJson(`${pathRoute}/${project}`, (json) => {
         json["name"] = project;

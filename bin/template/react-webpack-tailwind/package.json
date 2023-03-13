@@ -6,7 +6,7 @@
     "scripts": {
         "start": "webpack serve --mode=development"
     },
-    "author": "PeterH",
+    "author": "LiuN1an",
     "license": "MIT",
     "devDependencies": {
         "@babel/core": "^7.17.10",

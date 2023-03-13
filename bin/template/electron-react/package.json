@@ -38,7 +38,7 @@
         "dev": "cross-env PORT=8899 & npm run dev:renderer",
         "pck:win": "npm run build && electron-builder build --win --x64"
     },
-    "author": "PeterH",
+    "author": "LiuN1an",
     "license": "MIT",
     "devDependencies": {
         "@babel/cli": "^7.14.3",
