@@ -4,7 +4,8 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "start": "webpack serve --mode=development"
+        "start": "webpack serve --mode=development --config ./webpack.dev.js",
+        "build": "webpack --config ./webpack.prod.js --progress"
     },
     "author": "LiuN1an",
     "license": "MIT",
