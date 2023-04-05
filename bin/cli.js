@@ -9,6 +9,15 @@ const fs = require("fs");
 const rootPath = "js-project-template";
 const templatePrefix = "hcTest";
 
+let opsys = process.platform;
+if (opsys == "darwin") {
+  opsys = "MacOS";
+} else if (opsys == "win32" || opsys == "win64") {
+  opsys = "Windows";
+} else if (opsys == "linux") {
+  opsys = "Linux";
+}
+
 const generateNewName = (oldName) => {
   return Number(oldName) + 1 + "";
 };
@@ -65,21 +74,29 @@ program
   .action(async () => {
     exec("wmic logicaldisk get caption", async (_, stdout) => {
       const out = stdout.toString().replace(/ /g, "");
-      let answer = await inquirer.prompt([
-        {
-          type: "list",
-          name: "dir",
-          message: "请选择盘符",
-          default: "E",
-          choices: out
-            .split(/[\r\n]+/)
-            .filter((str) => str)
-            .map((str) => str.slice(0, str.length - 1))
-            .slice(1),
-        },
-      ]);
-      const { dir } = answer;
-      const pathRoute = `${dir}:/${rootPath}`;
+      let pathRoute = "";
+      if (opsys === "Windows") {
+        let answer = await inquirer.prompt([
+          {
+            type: "list",
+            name: "dir",
+            message: "请选择盘符",
+            default: "E",
+            choices: out
+              .split(/[\r\n]+/)
+              .filter((str) => str)
+              .map((str) => str.slice(0, str.length - 1))
+              .slice(1),
+          },
+        ]);
+        const { dir } = answer;
+        pathRoute = `${dir}:/${rootPath}`;
+      } else {
+        const os = require("os");
+        pathRoute = os.homedir();
+      }
+      console.log(pathRoute);
+
       if (!fs.existsSync(pathRoute)) {
         fs.mkdirSync(pathRoute);
       }
