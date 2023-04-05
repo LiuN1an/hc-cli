@@ -101,7 +101,7 @@ program
           name: "choose_template",
           message: "请选择模板类型",
           default: "web",
-          choices: ["web", "electron", "chrome-extension"],
+          choices: ["web", "electron", "chrome-extension", "nextjs"],
         },
       ]);
       const { choose_template } = answer;
@@ -137,6 +137,9 @@ program
           break;
         case "chrome-extension":
           templates = "react-tailwind-chrome-extensions";
+          break;
+        case "nextjs":
+          templates = "nextjs-tailwind";
           break;
       }
 

@@ -1,0 +1,37 @@
+{
+  "name": "hccli",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.5.5",
+    "@emotion/react": "^11.10.6",
+    "@emotion/styled": "^11.10.6",
+    "@types/node": "18.15.11",
+    "@types/react": "18.0.31",
+    "@types/react-dom": "18.0.11",
+    "classnames": "^2.3.2",
+    "framer-motion": "^10.10.0",
+    "i18next": "^22.4.13",
+    "lodash.debounce": "^4.0.8",
+    "next": "13.2.4",
+    "next-i18next": "^13.2.2",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-i18next": "^12.2.0",
+    "tailwind-scrollbar": "^3.0.0",
+    "typescript": "5.0.3"
+  },
+  "devDependencies": {
+    "@svgr/webpack": "^7.0.0",
+    "@types/lodash.debounce": "^4.0.7",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.3.1"
+  }
+}
