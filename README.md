@@ -9,6 +9,7 @@ Now, It provides 3 templates to create.
     - content_scripts
     - popup
     - background
+- nextjs-tailwind-i18n
 - ... and more to update
 
 ### Step
