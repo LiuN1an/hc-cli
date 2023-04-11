@@ -10,6 +10,7 @@ Now, It provides 3 templates to create.
     - popup
     - background
 - nextjs-prisma
+- nextjs-tailwind-i18n
 - ... and more to update
 
 ### Step
