@@ -9,6 +9,7 @@ Now, It provides 3 templates to create.
     - content_scripts
     - popup
     - background
+- nextjs-prisma
 - ... and more to update
 
 ### Step
