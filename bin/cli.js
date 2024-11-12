@@ -118,7 +118,13 @@ program
           name: "choose_template",
           message: "请选择模板类型",
           default: "web",
-          choices: ["web", "electron", "chrome-extension", "nextjs"],
+          choices: [
+            "web",
+            "electron",
+            "chrome-extension",
+            "nextjs",
+            "commerce",
+          ],
         },
       ]);
       const { choose_template } = answer;
@@ -157,6 +163,9 @@ program
           break;
         case "nextjs":
           templates = "nextjs-tailwind";
+          break;
+        case "commerce":
+          templates = "cloudflare-commerce";
           break;
       }
 

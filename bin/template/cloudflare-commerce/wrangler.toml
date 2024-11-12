@@ -1,0 +1,37 @@
+name = "commerce"
+compatibility_date = "2024-05-12"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
+
+[[d1_databases]]
+migrations_dir = "./db/migrations"
+binding = "DB"                                       # i.e. available in your Worker on env.DB
+database_name = "db"                   # When you create your D1 DB, you choose the name
+database_id = ""
+
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "mlm-bucket"
+
+[[kv_namespaces]]
+binding = "consume_level"
+id = ""
+
+# Bind a Queue producer. Use this binding to schedule an arbitrary task that may be processed later by a Queue consumer.
+# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#queues
+[[queues.producers]]
+binding = "QUEUE"
+queue = ""
+
+[vars]
+AUTH_SECRET="SFQt2cHeO1/U8pc8DDYFiHhLu1U0cuGZzOww8+rQSLc="
+AUTH_TRUST_HOST=""
+
+R2_HOST=""
+R2_ACCESS_KEY_ID=""
+R2_SECRET_ACCESS_KEY=""
+R2_FOR_S3_POINT=""
+R2_BUCKET_NAME=""
+R2_ACCOUNT_ID=""
+NEXT_PUBLIC_HOST=""
