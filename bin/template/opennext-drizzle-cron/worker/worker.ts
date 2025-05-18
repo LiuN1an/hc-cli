@@ -15,24 +15,17 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-import { getDB } from "../db";
+import { getDB } from "../db/worker";
+import { default as handler } from "../.open-next/worker.js";
 
 export default {
-  async fetch(req) {
-    const url = new URL(req.url);
-    url.pathname = "/__scheduled";
-    url.searchParams.append("cron", "* * * * *");
-    return new Response(
-      `To test the scheduled handler, ensure you have used the "--test-scheduled" then try running "curl ${url.href}".`
-    );
-  },
+  fetch: handler.fetch,
 
   // The scheduled handler is invoked at the interval set in our wrangler.jsonc's
   // [[triggers]] configuration.
   async scheduled(event, env, ctx): Promise<void> {
     try {
       // Get token from environment variables
-      const token = env.INVENTORY_TOKEN;
 
       const db = getDB(env);
 
@@ -44,3 +37,6 @@ export default {
     }
   },
 } satisfies ExportedHandler<Env>;
+
+// @ts-ignore `.open-next/worker.ts` is generated at build time
+export { DOQueueHandler, DOShardedTagCache } from "../.open-next/worker.js";
