@@ -7,6 +7,7 @@ import { products, hierarchicalCategories } from "@/schema";
 import type { PublicUser, Product, HierarchicalCategory } from "@/types";
 import { eq, and } from "drizzle-orm";
 import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -20,6 +21,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { 
   PlusIcon, 
   EditIcon, 
@@ -276,6 +284,19 @@ export async function action({ request, context }: Route.ActionArgs): Promise<Ac
 export default function AdminProducts({ loaderData }: { loaderData: ProductLoaderData }) {
   const { products: productsList, categories, filters } = loaderData;
   const actionData = useActionData<typeof action>();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // 处理状态筛选变化
+  const handleStatusChange = (value: string) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (value === "all") {
+      newSearchParams.delete("status");
+    } else {
+      newSearchParams.set("status", value);
+    }
+    navigate(`?${newSearchParams.toString()}`);
+  };
 
   return (
     <AdminLayout>
@@ -380,15 +401,16 @@ export default function AdminProducts({ loaderData }: { loaderData: ProductLoade
             />
           </div>
           
-          <select 
-            className="border rounded-md px-3 py-2 text-sm"
-            defaultValue={filters.status}
-            name="status"
-          >
-            <option value="all">全部状态</option>
-            <option value="online">已上线</option>
-            <option value="offline">已下线</option>
-          </select>
+          <Select value={filters.status} onValueChange={handleStatusChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="选择状态" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">全部状态</SelectItem>
+              <SelectItem value="online">已上线</SelectItem>
+              <SelectItem value="offline">已下线</SelectItem>
+            </SelectContent>
+          </Select>
 
           <Button variant="outline" size="sm">
             <FilterIcon className="h-4 w-4 mr-2" />
