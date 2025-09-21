@@ -50,14 +50,14 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN" className="dark">
+    <html lang="zh-CN">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
       </head>
-      <body className="bg-gray-950 text-gray-100 min-h-screen">
+      <body className="min-h-screen">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -75,25 +75,25 @@ export default function App() {
         <Toaster
           position="top-right"
           toastOptions={{
-            // 默认样式配置
+            // 默认样式配置 - Light主题
             duration: 4000,
             style: {
-              background: '#1f2937', // gray-800
-              color: '#f9fafb', // gray-50
-              border: '1px solid #374151', // gray-700
+              background: '#ffffff', // white
+              color: '#1f2937', // gray-800
+              border: '1px solid #e5e7eb', // gray-200
             },
             success: {
               duration: 3000,
               iconTheme: {
                 primary: '#10b981', // emerald-500
-                secondary: '#f9fafb', // gray-50
+                secondary: '#ffffff', // white
               },
             },
             error: {
               duration: 5000,
               iconTheme: {
                 primary: '#ef4444', // red-500
-                secondary: '#f9fafb', // gray-50
+                secondary: '#ffffff', // white
               },
             },
           }}
@@ -120,12 +120,12 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto text-gray-100">
-      <h1 className="text-3xl font-bold text-red-400 mb-4">{message}</h1>
-      <p className="text-gray-300 mb-4">{details}</p>
+    <main className="pt-16 p-4 container mx-auto">
+      <h1 className="text-3xl font-bold text-destructive mb-4">{message}</h1>
+      <p className="text-muted-foreground mb-4">{details}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto bg-gray-800 rounded-md border border-gray-700">
-          <code className="text-gray-300">{stack}</code>
+        <pre className="w-full p-4 overflow-x-auto bg-muted rounded-md border">
+          <code className="text-foreground">{stack}</code>
         </pre>
       )}
     </main>

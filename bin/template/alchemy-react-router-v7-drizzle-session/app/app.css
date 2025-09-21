@@ -104,51 +104,48 @@
 
 html,
 body {
-  @apply bg-neutral-950 text-neutral-50;
-  color-scheme: dark;
+  @apply bg-background text-foreground;
+  color-scheme: light;
 }
 
-/* 确保所有元素默认使用深色主题样式 */
+/* 确保所有元素默认使用light主题样式 */
 * {
-  @apply border-neutral-700;
+  @apply border-border;
 }
 
 /* 输入框默认样式 */
 input,
 textarea,
 select {
-  @apply bg-neutral-800 text-neutral-100 border-neutral-600 placeholder-neutral-400;
+  @apply bg-background text-foreground border-input placeholder-muted-foreground;
 }
 
-input:focus,
+/* 移除全局input focus样式，让shadcn组件自行处理 */
 textarea:focus,
 select:focus {
-  @apply ring-primary-500 border-primary-500 outline-none;
+  @apply ring-ring border-ring outline-none;
 }
 
-/* 按钮默认样式 */
-button {
-  @apply text-neutral-100;
-}
+/* 按钮默认样式 - 移除以免干扰shadcn组件样式 */
 
 /* 主要按钮样式 */
 .btn-primary {
-  @apply bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200;
+  @apply bg-primary text-primary-foreground hover:bg-primary/90 font-medium px-4 py-2 rounded-lg transition-colors duration-200;
 }
 
 /* 次要按钮样式 */
 .btn-secondary {
-  @apply bg-secondary-500 hover:bg-secondary-600 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200;
+  @apply bg-secondary text-secondary-foreground hover:bg-secondary/80 font-medium px-4 py-2 rounded-lg transition-colors duration-200;
 }
 
 /* 强调按钮样式 */
 .btn-accent {
-  @apply bg-accent-500 hover:bg-accent-600 text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200;
+  @apply bg-accent text-accent-foreground hover:bg-accent/80 font-medium px-4 py-2 rounded-lg transition-colors duration-200;
 }
 
 /* 边框按钮样式 */
 .btn-outline {
-  @apply border border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white font-medium px-4 py-2 rounded-lg transition-colors duration-200;
+  @apply border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground font-medium px-4 py-2 rounded-lg transition-colors duration-200;
 }
 
 /* 品牌渐变文字 */
@@ -161,7 +158,7 @@ button {
 
 /* 卡片样式 */
 .card {
-  @apply bg-neutral-900 border border-neutral-800 rounded-lg p-6 shadow-lg;
+  @apply bg-card border border-border rounded-lg p-6 shadow-lg;
 }
 
 /* 表单组样式 */
@@ -170,11 +167,11 @@ button {
 }
 
 .form-label {
-  @apply block text-sm font-medium text-neutral-200;
+  @apply block text-sm font-medium text-foreground;
 }
 
 .form-input {
-  @apply w-full px-3 py-2 bg-neutral-800 border border-neutral-600 rounded-lg text-neutral-100 placeholder-neutral-400 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200;
+  @apply w-full px-3 py-2 bg-background border border-input rounded-lg text-foreground placeholder-muted-foreground focus:!border-black focus:!border-2 focus:!ring-0 focus:!ring-offset-0 focus:!outline-none focus:!shadow-none outline-none transition-colors duration-200;
 }
 
 @theme inline {

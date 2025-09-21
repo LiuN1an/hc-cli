@@ -118,35 +118,35 @@ export default function AdminDashboard({ loaderData }: { loaderData: LoaderData 
       value: stats.totalUsers,
       icon: UsersIcon,
       color: "text-blue-600",
-      bgColor: "bg-blue-100",
+      bgColor: "bg-blue-50 dark:bg-blue-950",
     },
     {
       title: "总商品数",
       value: stats.totalProducts,
       icon: PackageIcon,
       color: "text-green-600",
-      bgColor: "bg-green-100",
+      bgColor: "bg-green-50 dark:bg-green-950",
     },
     {
       title: "在线商品",
       value: stats.onlineProducts,
       icon: TrendingUpIcon,
       color: "text-purple-600",
-      bgColor: "bg-purple-100",
+      bgColor: "bg-purple-50 dark:bg-purple-950",
     },
     {
       title: "总订单数",
       value: stats.totalOrders,
       icon: ShoppingCartIcon,
       color: "text-orange-600",
-      bgColor: "bg-orange-100",
+      bgColor: "bg-orange-50 dark:bg-orange-950",
     },
     {
       title: "待处理订单",
       value: stats.pendingOrders,
       icon: ClockIcon,
       color: "text-red-600",
-      bgColor: "bg-red-100",
+      bgColor: "bg-red-50 dark:bg-red-950",
     },
   ];
 
@@ -214,14 +214,14 @@ export default function AdminDashboard({ loaderData }: { loaderData: LoaderData 
                         <span
                           className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                             order.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
+                              ? "bg-yellow-50 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-200"
                               : order.status === "paid"
-                              ? "bg-green-100 text-green-800"
+                              ? "bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200"
                               : order.status === "shipped"
-                              ? "bg-blue-100 text-blue-800"
+                              ? "bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-200"
                               : order.status === "delivered"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
+                              ? "bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200"
+                              : "bg-muted text-muted-foreground"
                           }`}
                         >
                           {order.status === "pending" && "待支付"}
@@ -253,7 +253,7 @@ export default function AdminDashboard({ loaderData }: { loaderData: LoaderData 
             className="rounded-lg border bg-card p-6 shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
           >
             <div className="flex items-center gap-4">
-              <div className="rounded-full bg-blue-100 p-3">
+              <div className="rounded-full bg-blue-50 p-3 dark:bg-blue-950">
                 <PackageIcon className="h-6 w-6 text-blue-600" />
               </div>
               <div>
@@ -270,7 +270,7 @@ export default function AdminDashboard({ loaderData }: { loaderData: LoaderData 
             className="rounded-lg border bg-card p-6 shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
           >
             <div className="flex items-center gap-4">
-              <div className="rounded-full bg-green-100 p-3">
+              <div className="rounded-full bg-green-50 p-3 dark:bg-green-950">
                 <UsersIcon className="h-6 w-6 text-green-600" />
               </div>
               <div>
@@ -287,7 +287,7 @@ export default function AdminDashboard({ loaderData }: { loaderData: LoaderData 
             className="rounded-lg border bg-card p-6 shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
           >
             <div className="flex items-center gap-4">
-              <div className="rounded-full bg-orange-100 p-3">
+              <div className="rounded-full bg-orange-50 p-3 dark:bg-orange-950">
                 <ShoppingCartIcon className="h-6 w-6 text-orange-600" />
               </div>
               <div>

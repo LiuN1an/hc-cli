@@ -9,6 +9,17 @@ import { eq, and } from "drizzle-orm";
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Checkbox } from "~/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
 import { 
   PlusIcon, 
   EditIcon, 
@@ -265,7 +276,6 @@ export async function action({ request, context }: Route.ActionArgs): Promise<Ac
 export default function AdminProducts({ loaderData }: { loaderData: ProductLoaderData }) {
   const { products: productsList, categories, filters } = loaderData;
   const actionData = useActionData<typeof action>();
-  const [showCreateForm, setShowCreateForm] = useState(false);
 
   return (
     <AdminLayout>
@@ -278,10 +288,84 @@ export default function AdminProducts({ loaderData }: { loaderData: ProductLoade
               管理平台所有商品信息，包括创建、编辑、上下线等操作
             </p>
           </div>
-          <Button onClick={() => setShowCreateForm(true)}>
-            <PlusIcon className="h-4 w-4 mr-2" />
-            添加商品
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusIcon className="h-4 w-4 mr-2" />
+                添加商品
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>添加新商品</DialogTitle>
+                <DialogDescription>
+                  填写商品信息，创建新的商品。点击保存完成创建。
+                </DialogDescription>
+              </DialogHeader>
+              <Form method="post" className="space-y-4">
+                <input type="hidden" name="intent" value="create" />
+                
+                <div className="space-y-2">
+                  <Label htmlFor="name">商品名称</Label>
+                  <Input id="name" name="name" placeholder="请输入商品名称" required />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="description">商品描述</Label>
+                  <Input id="description" name="description" placeholder="请输入商品描述" />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="price">售价</Label>
+                    <Input 
+                      id="price"
+                      name="price" 
+                      type="number" 
+                      step="0.01"
+                      placeholder="0.00" 
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="originalPrice">原价</Label>
+                    <Input 
+                      id="originalPrice"
+                      name="originalPrice" 
+                      type="number" 
+                      step="0.01"
+                      placeholder="0.00" 
+                      required 
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="stock">库存数量</Label>
+                  <Input 
+                    id="stock"
+                    name="stock" 
+                    type="number" 
+                    placeholder="0" 
+                    required 
+                  />
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    name="isOnline" 
+                    value="true"
+                    id="isOnline"
+                  />
+                  <Label htmlFor="isOnline">立即上线</Label>
+                </div>
+                
+                <DialogFooter>
+                  <Button type="submit">创建商品</Button>
+                </DialogFooter>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* 搜索和筛选 */}
@@ -316,8 +400,8 @@ export default function AdminProducts({ loaderData }: { loaderData: ProductLoade
         {actionData && (
           <div className={`p-4 rounded-lg ${
             actionData.success 
-              ? "bg-green-50 text-green-800 border border-green-200" 
-              : "bg-red-50 text-red-800 border border-red-200"
+              ? "bg-green-50 text-green-800 border border-green-200 dark:bg-green-950 dark:text-green-200 dark:border-green-800" 
+              : "bg-red-50 text-red-800 border border-red-200 dark:bg-red-950 dark:text-red-200 dark:border-red-800"
           }`}>
             {actionData.success ? actionData.message : actionData.error}
           </div>
@@ -348,8 +432,8 @@ export default function AdminProducts({ loaderData }: { loaderData: ProductLoade
                         <div className="flex items-center gap-2">
                           <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                             product.isOnline
-                              ? "bg-green-100 text-green-800"
-                              : "bg-gray-100 text-gray-800"
+                              ? "bg-green-50 text-green-800 dark:bg-green-950 dark:text-green-200"
+                              : "bg-muted text-muted-foreground"
                           }`}>
                             {product.isOnline ? "已上线" : "已下线"}
                           </span>
@@ -408,7 +492,7 @@ export default function AdminProducts({ loaderData }: { loaderData: ProductLoade
                           type="submit"
                           variant="outline" 
                           size="sm" 
-                          className="text-red-600 hover:text-red-700"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                           title="删除商品"
                           onClick={(e) => {
                             if (!confirm("确定要删除这个商品吗？")) {
@@ -433,84 +517,6 @@ export default function AdminProducts({ loaderData }: { loaderData: ProductLoade
           </div>
         </div>
 
-        {/* 创建商品表单模态框 - 简化版本，实际项目中建议使用独立的组件 */}
-        {showCreateForm && (
-          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
-              <h3 className="text-lg font-semibold mb-4">添加新商品</h3>
-              <Form method="post" className="space-y-4">
-                <input type="hidden" name="intent" value="create" />
-                
-                <div>
-                  <label className="text-sm font-medium">商品名称</label>
-                  <Input name="name" placeholder="请输入商品名称" required />
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium">商品描述</label>
-                  <Input name="description" placeholder="请输入商品描述" />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">售价</label>
-                    <Input 
-                      name="price" 
-                      type="number" 
-                      step="0.01"
-                      placeholder="0.00" 
-                      required 
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">原价</label>
-                    <Input 
-                      name="originalPrice" 
-                      type="number" 
-                      step="0.01"
-                      placeholder="0.00" 
-                      required 
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="text-sm font-medium">库存数量</label>
-                  <Input 
-                    name="stock" 
-                    type="number" 
-                    placeholder="0" 
-                    required 
-                  />
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="checkbox" 
-                    name="isOnline" 
-                    value="true"
-                    id="isOnline" 
-                  />
-                  <label htmlFor="isOnline" className="text-sm">立即上线</label>
-                </div>
-                
-                <div className="flex gap-2 pt-4">
-                  <Button type="submit" className="flex-1">
-                    创建商品
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setShowCreateForm(false)}
-                    className="flex-1"
-                  >
-                    取消
-                  </Button>
-                </div>
-              </Form>
-            </div>
-          </div>
-        )}
       </div>
     </AdminLayout>
   );
