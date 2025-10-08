@@ -1,0 +1,537 @@
+---
+description: Table组件最佳实践 - 虚拟列表、过滤器、实时数据与性能优化
+globs: 
+  - "components/**/*table*.{ts,tsx}"
+  - "components/with-context/Table/**/*.{ts,tsx}"
+  - "components/ui/*filter*.{ts,tsx}"
+  - "features/**/table*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Table 组件最佳实践
+
+本项目基于 `@tanstack/react-table` + `@tanstack/react-virtual` 构建高性能表格系统，适用于大数据量、复杂过滤、实时更新场景。
+
+## 虚拟列表核心配置
+
+### 基础设置
+```typescript
+const rowVirtualizer = useVirtualizer({
+  count: rowModel.rows.length,
+  estimateSize: () => 33,              // 固定行高33px
+  getScrollElement: () => containerRef.current,
+  overscan: 5,                         // 预渲染5行防白屏
+  measureElement: /* Firefox兼容处理 */
+});
+```
+
+**关键点**
+- 行高固定：保证虚拟滚动稳定性，避免布局抖动
+- Overscan值：平衡性能与用户体验，5行为最佳实践
+- Firefox兼容：禁用动态测量避免性能问题
+
+### 无限滚动实现
+```typescript
+const fetchMoreOnBottomReached = useCallback((container) => {
+  const { scrollHeight, scrollTop, clientHeight } = container;
+  // 距底部500px触发加载
+  if (scrollHeight - scrollTop - clientHeight < 500 && isAllowNextFetch) {
+    fetchNextPage?.();
+  }
+}, [fetchNextPage, isAllowNextFetch]);
+
+// 只监听垂直滚动
+const lastScrollTopRef = useRef(0);
+onScroll={(e) => {
+  const currentScrollTop = e.currentTarget.scrollTop;
+  if (currentScrollTop !== lastScrollTopRef.current) {
+    fetchMoreOnBottomReached(e.currentTarget);
+    lastScrollTopRef.current = currentScrollTop;
+  }
+}}
+```
+
+**最佳实践**
+- 阈值设置：500px触发点既不过早也不过晚
+- 避免误触发：使用ref追踪垂直滚动，排除水平滚动
+- 加载控制：通过`isAllowNextFetch`防止重复请求
+
+## 列定义标准模式
+
+### 列配置结构
+```typescript
+const columnHelper = createColumnHelper<RowType>();
+
+export const columns = [
+  columnHelper.accessor("fieldName", {
+    id: "uniqueId",
+    header: CustomHeaderComponent,
+    cell: ({ row, table }) => (
+      <div style={{ width: "100%", textAlign: "center" }}>
+        {/* 单元格内容 */}
+      </div>
+    ),
+    filterFn: customFilterFunction,
+    size: 100,
+    enablePinning: true,
+  })
+];
+```
+
+### 自定义FilterFn
+```typescript
+// 时间范围过滤
+const dateRangeFilter: FilterFn<T> = (row, columnId, value) => {
+  const { fromTimestamp, toTimestamp } = value;
+  const cellValue = Number(row.getValue(columnId));
+  return cellValue >= fromTimestamp && cellValue <= toTimestamp;
+};
+
+// 数值范围过滤
+const numericRangeFilter: FilterFn<T> = (row, columnId, value) => {
+  const { min, max } = value;
+  const cellValue = Number(row.getValue(columnId));
+  if (min !== undefined && max !== undefined) {
+    return cellValue >= min && cellValue <= max;
+  }
+  return min !== undefined ? cellValue >= min : cellValue <= max;
+};
+
+// 多选过滤
+const multiSelectFilter: FilterFn<T> = (row, columnId, value: string[]) => {
+  if (!value || value.length === 0) return true;
+  const cellValue = row.getValue(columnId) as string;
+  return value.includes(cellValue);
+};
+```
+
+**设计原则**
+- FilterFn负责客户端过滤逻辑
+- 复杂过滤应在服务端完成，FilterFn仅做展示过滤
+- 返回值必须为boolean
+
+### Meta数据传递
+```typescript
+// 初始化时传入meta
+useVirtualTable({
+  // ...其他配置
+  meta: {
+    showOriginTime,
+    toggleShowOriginTime,
+    customConfig,
+  }
+});
+
+// 在cell/header中访问
+cell: ({ row, table }) => {
+  const meta = table.options.meta as any;
+  const showOrigin = meta?.showOriginTime;
+  // 使用meta数据
+}
+```
+
+## 表格初始化标准流程
+
+### 完整初始化模板
+```typescript
+export const DataTable: FC<{ ca: string }> = ({ ca }) => {
+  // 1. 状态定义
+  const [rowSelection, setRowSelection] = useState({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "time", desc: true }
+  ]);
+
+  // 2. 提取过滤器值（解耦状态与API参数）
+  const dateFilter = useMemo(() => 
+    columnFilters.find(f => f.id === "date")?.value,
+    [columnFilters]
+  );
+  
+  const volumeFilter = useMemo(() => 
+    columnFilters.find(f => f.id === "volume")?.value,
+    [columnFilters]
+  );
+
+  // 3. 转换排序参数
+  const sortParams = useMemo(() => {
+    if (sorting.length === 0) return {};
+    const [sort] = sorting;
+    return {
+      sort_order: sort.desc ? "desc" : "asc",
+      sort_by: sort.id,
+    };
+  }, [sorting]);
+
+  // 4. 无限查询
+  const { data, fetchNextPage, isFetching, isError } = useInfiniteQuery({
+    ...postApiV1DataTradesInfiniteOptions({
+      body: {
+        symbol: ca,
+        page_size: 100,
+        start_time: dateFilter?.fromTimestamp,
+        min_value: volumeFilter?.min,
+        ...sortParams,
+      }
+    }),
+    getNextPageParam: (_, allPages) => allPages.length + 1
+  });
+
+  // 5. 扁平化分页数据
+  const flatData = useMemo(() => 
+    data?.pages?.flatMap(page => page.data).filter(Boolean) || [],
+    [data]
+  );
+
+  // 6. 合并实时数据（可选）
+  const combinedData = useCombinedTableData(flatData, "time");
+
+  // 7. 过滤器变化时重新获取
+  useEffect(() => {
+    refetch();
+  }, [dateFilter, volumeFilter]);
+
+  // 8. 初始化虚拟表格
+  const { table, render } = useVirtualTable({
+    data: combinedData,
+    columns,
+    state: { rowSelection, columnFilters, sorting },
+    onRowSelectionChange: setRowSelection,
+    onColumnFiltersChange: setColumnFilters,
+    onSortingChange: setSorting,
+    enableColumnFilters: true,
+    fetchNextPage,
+    isFetching,
+    isAllowNextFetch: flatData.length < totalCount,
+    meta: { /* 全局配置 */ }
+  });
+
+  return render;
+};
+```
+
+**关键步骤**
+1. **状态分离**：rowSelection、columnFilters、sorting独立管理
+2. **useMemo提取**：避免过滤器状态直接耦合API参数
+3. **扁平化处理**：无限查询分页数据需要flatten
+4. **条件加载**：通过`isAllowNextFetch`控制是否继续分页
+5. **副作用触发**：过滤器变化时手动refetch
+
+## 过滤器系统设计
+
+### 时间范围过滤器
+```typescript
+export interface TimeFilterValue {
+  fromTimestamp?: number;  // 秒级时间戳
+  toTimestamp?: number;
+}
+
+// 使用
+<DateTimeFilter
+  value={column.getFilterValue() as TimeFilterValue}
+  onFilterChange={(value) => column.setFilterValue(value)}
+  label=""
+  triggerClassName="rounded-md text-xs"
+/>
+```
+
+**实现要点**
+- 日期默认值：fromDate设为00:00:00，toDate设为23:59:59
+- 时间戳转换：前端Date转秒级时间戳（除以1000）
+- 验证逻辑：fromDate不能晚于toDate
+- Apply/Cancel分离：点击Apply才生效，避免频繁触发
+
+### 数值范围过滤器
+```typescript
+export interface NumberRangeFilterValue {
+  min?: number;
+  max?: number;
+}
+
+// 输入验证正则
+const isValidNumber = /^-?\d*\.?\d*$/;
+```
+
+**实现要点**
+- 独立输入：min和max可以单独设置
+- 实时验证：输入时检查正则，应用时检查min≤max
+- 类型安全：存储为number而非string
+
+### 文本过滤器
+```typescript
+const [search, setSearch] = useState("");
+
+<Input
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  placeholder="Filter trader"
+/>
+<Button onClick={() => {
+  column.setFilterValue(search);
+  setIsOpen(false);
+}}>Apply</Button>
+```
+
+**交互模式**
+- 本地状态：使用useState存储输入值
+- 延迟生效：点击Apply才调用setFilterValue
+- Clear按钮：重置输入并清空过滤器
+
+### 统一表头结构
+```typescript
+export const FieldHeader: ColumnDefTemplate<T> = ({ column, table }) => (
+  <div className="flex items-center text-xs">
+    <span className="font-bold">Label</span>
+    <TheadSorting table={table} id="fieldId" />
+    <FilterComponent
+      value={column.getFilterValue()}
+      onFilterChange={(value) => column.setFilterValue(value)}
+    />
+  </div>
+);
+```
+
+**设计规范**
+- 标签 + 排序 + 过滤三段式布局
+- 过滤器触发器统一使用Filter图标
+- 激活态显示：`bg-gray-700 text-[#7D7DF5]`
+
+## 实时数据集成方案
+
+### useCombinedTableData Hook
+```typescript
+const combinedData = useCombinedTableData<T>(flatData, "time");
+```
+
+**内部机制**
+1. **监听实时更新**：通过`table.onTransactionRealtimeChange`订阅
+2. **去重合并**：使用Map按uniqueKeyField去重
+3. **排序置顶**：实时数据排在最前面
+4. **自动清理**：flatData引用变化时重置realtimeData
+
+### 实时监听条件控制
+```typescript
+useEffect(() => {
+  // 只有无过滤器时启用实时监听
+  if (
+    !forceTimeRange &&
+    !columnDateFilter &&
+    !columnVolumeFilter &&
+    !columnTraderFilter &&
+    ca &&
+    !isFetching &&
+    flatData.length > 0
+  ) {
+    return table.startTransactionListen(ca);
+  }
+}, [ca, /* 所有过滤器依赖 */, isFetching, flatData.length]);
+```
+
+**设计原则**
+- 过滤器激活时禁用实时数据，避免数据不一致
+- 等待首次加载完成再启用实时监听
+- 返回unsubscribe函数清理监听器
+
+## 列固定（Pinning）实现
+
+### 固定列样式函数
+```typescript
+const getCommonPinningStyles = (column: Column<T>): CSSProperties => {
+  const isPinned = column.id === "select" || column.id === "date";
+  const isFirstPinned = column.id === "select";
+  const isSecondPinned = column.id === "date";
+
+  return {
+    position: isPinned ? "sticky" : "relative",
+    width: column.getSize(),
+    zIndex: isPinned ? 2 : 0,
+    left: isFirstPinned ? 0 : isSecondPinned ? 40 : 0,
+    boxShadow: isSecondPinned ? "4px 0 4px -4px rgba(0,0,0,0.3)" : undefined,
+    backgroundColor: isPinned ? "black" : undefined,
+  };
+};
+
+// 传入虚拟表格
+useVirtualTable({
+  getCommonPinningStyles,
+  // ...
+});
+```
+
+**关键点**
+- `sticky` + `zIndex: 2`：确保固定列在最上层
+- `backgroundColor`：必须设置，避免滚动时穿透
+- `left`：累加前面固定列宽度
+- `boxShadow`：最后固定列添加阴影分隔
+
+## 排序组件实现
+
+### TheadSorting组件
+```typescript
+export const TheadSorting: FC<{ table: Table<any>; id: string }> = ({
+  table,
+  id,
+}) => {
+  const isDesc = useMemo(() => {
+    const [sort] = table.getState().sorting;
+    if (sort?.id === id) return sort.desc;
+  }, [table.getState().sorting, id]);
+
+  return (
+    <div className="flex flex-col items-center">
+      <OrderUp className={cn(
+        "h-2 w-2",
+        isDesc === false && "text-[#7D7DF5]"
+      )}/>
+      <OrderDown className={cn(
+        "h-2 w-2",
+        isDesc === true && "text-[#7D7DF5]"
+      )}/>
+    </div>
+  );
+};
+```
+
+**设计规范**
+- 双向箭头垂直排列
+- 当前排序方向高亮紫色`#7D7DF5`
+- 点击切换：`table.setSorting([{ id, desc: !isDesc }])`
+
+## 性能优化清单
+
+### 虚拟化优化
+- [ ] 使用`useVirtualizer`处理超过100行数据
+- [ ] 固定行高避免动态测量（Firefox性能问题）
+- [ ] overscan设置为5行（平衡性能与体验）
+- [ ] 使用`measureElement`实现精确测量（非Firefox）
+
+### 状态管理优化
+- [ ] 使用`useMemo`提取过滤器值，避免重复计算
+- [ ] 分页数据扁平化缓存到`useMemo`
+- [ ] 排序参数转换使用`useMemo`
+- [ ] 避免在render中直接访问`table.getState()`
+
+### 数据处理优化
+- [ ] 使用Map进行去重，复杂度O(n)
+- [ ] 实时数据与分页数据合并延迟到`useMemo`
+- [ ] 过滤器变化时才触发refetch，避免无效请求
+- [ ] 服务端分页+排序+过滤，客户端仅做展示
+
+### 渲染优化
+- [ ] 使用`flexRender`渲染cell和header
+- [ ] 避免在cell中使用复杂计算，提前在数据层完成
+- [ ] 固定列必须设置背景色避免重绘
+- [ ] 骨架屏使用固定数量（20行），避免动态计算
+
+## 样式规范
+
+### 颜色系统
+```typescript
+// 主题色
+primary: "#04fbd2"      // 主色调（青色）
+secondary: "#7D7DF5"    // 表头/强调色（紫色）
+
+// 状态色
+buy: "#88d693"          // 买入绿
+sell: "#f04866"         // 卖出红
+buyBg: "#88d6930c"      // 买入背景（12%透明度）
+sellBg: "#f048660c"     // 卖出背景（12%透明度）
+
+// 中性色
+gray700: "#585858"      // 边框/分隔
+gray200: "#e5e7eb"      // 文本
+black: "#000000"        // 背景
+```
+
+### 尺寸规范
+```typescript
+rowHeight: 33           // 行高固定33px
+headerHeight: 33        // 表头高度
+fontSize: 12            // 字体大小（text-xs）
+iconSize: 12            // 图标尺寸（h-3 w-3）
+```
+
+### 交互规范
+```css
+/* 行悬停 */
+.tbody-row:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 过滤器激活态 */
+.filter-active {
+  background: #585858;
+  color: #7D7DF5;
+}
+
+/* 排序激活态 */
+.sort-active {
+  color: #7D7DF5;
+}
+```
+
+## 类型安全
+
+### 行类型定义
+```typescript
+export type TableRowType = {
+  time: string;
+  type: "sell" | "buy";
+  value: string;
+  trader: string;
+  // ...其他字段
+};
+```
+
+### 过滤器类型定义
+```typescript
+export interface TimeFilterValue {
+  fromTimestamp?: number;
+  toTimestamp?: number;
+}
+
+export interface NumberRangeFilterValue {
+  min?: number;
+  max?: number;
+}
+```
+
+### Meta类型定义
+```typescript
+declare module '@tanstack/react-table' {
+  interface TableMeta<TData> {
+    showOriginTime?: boolean;
+    toggleShowOriginTime?: () => void;
+    filterWalletList?: string[];
+    isFetched?: boolean;
+  }
+}
+```
+
+## 常见问题
+
+### Q: 虚拟滚动出现白屏？
+A: 增加`overscan`值到5-10，或检查`estimateSize`是否准确
+
+### Q: 横向滚动触发分页加载？
+A: 使用ref追踪`scrollTop`，只在垂直滚动时触发
+
+### Q: 过滤器不生效？
+A: 检查`enableColumnFilters: true`，确认filterFn正确返回boolean
+
+### Q: 实时数据重复？
+A: 确认`uniqueKeyField`唯一且正确，检查Map去重逻辑
+
+### Q: 固定列滚动时穿透？
+A: 必须设置`backgroundColor`，`zIndex`至少为2
+
+### Q: 排序不生效？
+A: 检查sorting state是否正确传递，确认sortBy字段名匹配
+
+## 参考实现
+
+- 虚拟列表Hook: `components/virtual-table.tsx`
+- History表格: `components/with-context/Table/context/history/`
+- Holders表格: `components/with-context/Table/context/holders/`
+- 过滤器组件: `components/ui/*-filter.tsx`
+- 实时数据Hook: `components/with-context/Table/hooks/useCombinedTableData.ts`
