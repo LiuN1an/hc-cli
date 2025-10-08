@@ -1,16 +1,14 @@
 ---
 description: Table组件最佳实践 - 虚拟列表、过滤器、实时数据与性能优化
 globs: 
-  - "components/**/*table*.{ts,tsx}"
-  - "components/with-context/Table/**/*.{ts,tsx}"
-  - "components/ui/*filter*.{ts,tsx}"
-  - "features/**/table*.{ts,tsx}"
+  - "**/*table*.{ts,tsx}"
+  - "**/*filter*.{ts,tsx}"
 alwaysApply: false
 ---
 
 # Table 组件最佳实践
 
-本项目基于 `@tanstack/react-table` + `@tanstack/react-virtual` 构建高性能表格系统，适用于大数据量、复杂过滤、实时更新场景。
+基于 `@tanstack/react-table` + `@tanstack/react-virtual` 构建高性能表格系统的通用最佳实践，适用于大数据量、复杂过滤、实时更新场景。
 
 ## 虚拟列表核心配置
 
@@ -59,21 +57,33 @@ onScroll={(e) => {
 ## 列定义标准模式
 
 ### 列配置结构
+列定义是表格的核心，建议每个表格独立维护 `columns.tsx` 文件。
+
 ```typescript
-const columnHelper = createColumnHelper<RowType>();
+import { createColumnHelper, FilterFn } from "@tanstack/react-table";
+
+// 定义行类型
+type DataRow = {
+  id: string;
+  name: string;
+  value: number;
+  createTime: number;
+};
+
+const columnHelper = createColumnHelper<DataRow>();
 
 export const columns = [
   columnHelper.accessor("fieldName", {
-    id: "uniqueId",
-    header: CustomHeaderComponent,
-    cell: ({ row, table }) => (
+    id: "uniqueId",              // 必须唯一，用于排序、过滤等操作
+    header: CustomHeaderComponent, // 表头组件
+    cell: ({ row, table }) => (   // 单元格渲染
       <div style={{ width: "100%", textAlign: "center" }}>
-        {/* 单元格内容 */}
+        {row.original.fieldName}
       </div>
     ),
-    filterFn: customFilterFunction,
-    size: 100,
-    enablePinning: true,
+    filterFn: customFilterFunction, // 自定义过滤逻辑
+    size: 100,                      // 列宽（px）
+    enablePinning: true,            // 是否可固定
   })
 ];
 ```
@@ -133,8 +143,10 @@ cell: ({ row, table }) => {
 ## 表格初始化标准流程
 
 ### 完整初始化模板
+这是一个包含虚拟滚动、无限分页、过滤器、排序的完整实现模板。
+
 ```typescript
-export const DataTable: FC<{ ca: string }> = ({ ca }) => {
+export const DataTable: FC<{ dataSource: string }> = ({ dataSource }) => {
   // 1. 状态定义
   const [rowSelection, setRowSelection] = useState({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -163,18 +175,20 @@ export const DataTable: FC<{ ca: string }> = ({ ca }) => {
     };
   }, [sorting]);
 
-  // 4. 无限查询
+  // 4. 无限查询（以React Query为例）
   const { data, fetchNextPage, isFetching, isError } = useInfiniteQuery({
-    ...postApiV1DataTradesInfiniteOptions({
-      body: {
-        symbol: ca,
-        page_size: 100,
-        start_time: dateFilter?.fromTimestamp,
-        min_value: volumeFilter?.min,
-        ...sortParams,
-      }
+    queryKey: ['tableData', dataSource, dateFilter, volumeFilter, sortParams],
+    queryFn: ({ pageParam = 1 }) => fetchTableData({
+      source: dataSource,
+      page: pageParam,
+      pageSize: 100,
+      startTime: dateFilter?.fromTimestamp,
+      minValue: volumeFilter?.min,
+      ...sortParams,
     }),
-    getNextPageParam: (_, allPages) => allPages.length + 1
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.hasMore ? allPages.length + 1 : undefined;
+    }
   });
 
   // 5. 扁平化分页数据
@@ -299,38 +313,111 @@ export const FieldHeader: ColumnDefTemplate<T> = ({ column, table }) => (
 ## 实时数据集成方案
 
 ### useCombinedTableData Hook
+适用于需要同时展示历史分页数据和实时推送数据的场景（如交易记录、日志监控等）。
+
 ```typescript
-const combinedData = useCombinedTableData<T>(flatData, "time");
+// 使用方式
+const combinedData = useCombinedTableData<T>(flatData, "id"); // id为唯一键字段
 ```
 
-**内部机制**
-1. **监听实时更新**：通过`table.onTransactionRealtimeChange`订阅
-2. **去重合并**：使用Map按uniqueKeyField去重
-3. **排序置顶**：实时数据排在最前面
-4. **自动清理**：flatData引用变化时重置realtimeData
+**核心实现逻辑**
+```typescript
+export function useCombinedTableData<T>(
+  flatData: T[],
+  uniqueKeyField: keyof T = 'id' as keyof T
+) {
+  const [realtimeData, setRealtimeData] = useState<T[]>([]);
+
+  // 监听实时更新（具体实现根据你的实时通信方案，如WebSocket、SSE等）
+  useEffect(() => {
+    const unsubscribe = realtimeDataSource.subscribe((newData: T[]) => {
+      setRealtimeData(prevData => {
+        const uniqueMap = new Map<string, T>();
+        
+        // 先添加已有实时数据
+        prevData.forEach(item => {
+          uniqueMap.set(String(item[uniqueKeyField]), item);
+        });
+        
+        // 新数据覆盖旧数据
+        newData.forEach(item => {
+          uniqueMap.set(String(item[uniqueKeyField]), item);
+        });
+        
+        // 转数组并排序（最新数据在前）
+        return Array.from(uniqueMap.values())
+          .sort((a, b) => {
+            const aValue = a[uniqueKeyField] as unknown as number;
+            const bValue = b[uniqueKeyField] as unknown as number;
+            return bValue - aValue; // 降序
+          });
+      });
+    });
+
+    return unsubscribe;
+  }, [uniqueKeyField]);
+
+  // flatData变化时重置实时数据（过滤器变化场景）
+  useEffect(() => {
+    setRealtimeData([]);
+  }, [flatData]);
+
+  // 合并数据：实时数据在前，历史数据在后，去重
+  return useMemo(() => {
+    return combineTableData(flatData, realtimeData, uniqueKeyField);
+  }, [flatData, realtimeData, uniqueKeyField]);
+}
+```
+
+**工具函数：combineTableData**
+```typescript
+export function combineTableData<T>(
+  flatData: T[],
+  realtimeData: T[],
+  uniqueKeyField: keyof T = 'id' as keyof T
+): T[] {
+  if (!realtimeData.length) return flatData;
+  if (!flatData.length) return realtimeData;
+
+  // 建立历史数据Map用于去重
+  const existingDataMap = new Map<string, boolean>();
+  flatData.forEach(item => {
+    existingDataMap.set(String(item[uniqueKeyField]), true);
+  });
+
+  // 过滤掉已存在于历史数据的实时数据
+  const uniqueRealtimeData = realtimeData.filter(item => {
+    return !existingDataMap.get(String(item[uniqueKeyField]));
+  });
+
+  // 实时数据置顶
+  return [...uniqueRealtimeData, ...flatData];
+}
+```
 
 ### 实时监听条件控制
 ```typescript
 useEffect(() => {
-  // 只有无过滤器时启用实时监听
-  if (
-    !forceTimeRange &&
-    !columnDateFilter &&
-    !columnVolumeFilter &&
-    !columnTraderFilter &&
-    ca &&
+  // 条件：无过滤器 + 数据已加载 + 未在加载中
+  const shouldEnableRealtime = 
+    !dateFilter &&
+    !volumeFilter &&
+    !searchFilter &&
     !isFetching &&
-    flatData.length > 0
-  ) {
-    return table.startTransactionListen(ca);
+    flatData.length > 0;
+
+  if (shouldEnableRealtime) {
+    // 启动实时监听（返回清理函数）
+    return realtimeDataSource.start(dataSource);
   }
-}, [ca, /* 所有过滤器依赖 */, isFetching, flatData.length]);
+}, [dateFilter, volumeFilter, searchFilter, isFetching, flatData.length]);
 ```
 
 **设计原则**
-- 过滤器激活时禁用实时数据，避免数据不一致
-- 等待首次加载完成再启用实时监听
-- 返回unsubscribe函数清理监听器
+- **过滤器互斥**：有过滤器时禁用实时数据，避免数据不一致
+- **延迟启动**：等待首次加载完成再启用实时监听
+- **自动清理**：返回unsubscribe函数，组件卸载时自动清理
+- **去重机制**：使用Map按唯一键去重，O(n)复杂度
 
 ## 列固定（Pinning）实现
 
@@ -423,86 +510,92 @@ export const TheadSorting: FC<{ table: Table<any>; id: string }> = ({
 - [ ] 固定列必须设置背景色避免重绘
 - [ ] 骨架屏使用固定数量（20行），避免动态计算
 
-## 样式规范
-
-### 颜色系统
-```typescript
-// 主题色
-primary: "#04fbd2"      // 主色调（青色）
-secondary: "#7D7DF5"    // 表头/强调色（紫色）
-
-// 状态色
-buy: "#88d693"          // 买入绿
-sell: "#f04866"         // 卖出红
-buyBg: "#88d6930c"      // 买入背景（12%透明度）
-sellBg: "#f048660c"     // 卖出背景（12%透明度）
-
-// 中性色
-gray700: "#585858"      // 边框/分隔
-gray200: "#e5e7eb"      // 文本
-black: "#000000"        // 背景
-```
+## 样式设计建议
 
 ### 尺寸规范
 ```typescript
-rowHeight: 33           // 行高固定33px
-headerHeight: 33        // 表头高度
-fontSize: 12            // 字体大小（text-xs）
-iconSize: 12            // 图标尺寸（h-3 w-3）
+rowHeight: 33-40        // 行高建议33-40px（固定值，避免虚拟滚动抖动）
+headerHeight: 33-40     // 表头高度与行高一致
+fontSize: 12-14         // 字体大小
+iconSize: 12-16         // 图标尺寸
 ```
+
+### 视觉层次
+- **表头**：粗体、略深背景、统一色调（如紫/蓝系）
+- **奇偶行**：可选择性添加斑马纹，提升可读性
+- **悬停态**：行悬停时边框或背景变化，提供视觉反馈
+- **激活态**：过滤器、排序激活时颜色变化
 
 ### 交互规范
 ```css
-/* 行悬停 */
-.tbody-row:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+/* 建议的交互样式 */
+.table-row:hover {
+  border-color: var(--border-hover);
+  cursor: pointer;
 }
 
-/* 过滤器激活态 */
-.filter-active {
-  background: #585858;
-  color: #7D7DF5;
+.filter-active, .sort-active {
+  color: var(--primary-color);
+  background: var(--active-bg);
 }
 
-/* 排序激活态 */
-.sort-active {
-  color: #7D7DF5;
+/* 固定列阴影分隔 */
+.pinned-column {
+  box-shadow: 4px 0 4px -4px rgba(0, 0, 0, 0.3);
 }
 ```
 
-## 类型安全
+## TypeScript 类型安全
 
 ### 行类型定义
 ```typescript
+// 定义清晰的行数据结构
 export type TableRowType = {
-  time: string;
-  type: "sell" | "buy";
-  value: string;
-  trader: string;
-  // ...其他字段
+  id: string;                    // 唯一标识
+  name: string;
+  value: number;
+  status: "active" | "inactive"; // 使用联合类型
+  createTime: number;            // 时间戳
+  metadata?: Record<string, any>; // 可选的元数据
 };
 ```
 
 ### 过滤器类型定义
 ```typescript
+// 时间范围过滤器
 export interface TimeFilterValue {
   fromTimestamp?: number;
   toTimestamp?: number;
 }
 
+// 数值范围过滤器
 export interface NumberRangeFilterValue {
   min?: number;
   max?: number;
 }
+
+// 多选过滤器
+export type MultiSelectFilterValue = string[];
+
+// 文本搜索过滤器
+export type TextSearchFilterValue = string;
 ```
 
-### Meta类型定义
+### Meta类型扩展
+为了在表格组件中传递自定义配置，可以扩展TableMeta类型：
+
 ```typescript
 declare module '@tanstack/react-table' {
   interface TableMeta<TData> {
+    // 显示配置
     showOriginTime?: boolean;
     toggleShowOriginTime?: () => void;
-    filterWalletList?: string[];
+    
+    // 业务逻辑配置
+    onRowAction?: (row: TData) => void;
+    customConfig?: Record<string, any>;
+    
+    // 状态标识
     isFetched?: boolean;
   }
 }
@@ -528,10 +621,29 @@ A: 必须设置`backgroundColor`，`zIndex`至少为2
 ### Q: 排序不生效？
 A: 检查sorting state是否正确传递，确认sortBy字段名匹配
 
-## 参考实现
+## 架构建议
 
-- 虚拟列表Hook: `components/virtual-table.tsx`
-- History表格: `components/with-context/Table/context/history/`
-- Holders表格: `components/with-context/Table/context/holders/`
-- 过滤器组件: `components/ui/*-filter.tsx`
-- 实时数据Hook: `components/with-context/Table/hooks/useCombinedTableData.ts`
+### 文件组织
+```
+src/
+  components/
+    virtual-table.tsx          # 虚拟表格核心Hook
+    table-sorting.tsx          # 排序组件
+    ui/
+      date-time-filter.tsx     # 时间范围过滤器
+      number-range-filter.tsx  # 数值范围过滤器
+  features/
+    [feature-name]/
+      table.tsx                # 表格容器组件
+      columns.tsx              # 列定义
+      hooks/
+        useCombinedTableData.ts # 实时数据合并Hook
+      utils/
+        combineTableData.ts    # 数据合并工具函数
+```
+
+### 代码复用策略
+- **虚拟表格Hook**：封装 `useVirtualTable` 统一管理配置
+- **过滤器组件**：UI层复用，只传值和回调
+- **列定义**：按业务拆分文件，每个表格独立columns
+- **工具函数**：数据处理逻辑（去重、合并、转换）抽离到utils
