@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { users } from "@/schema";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
-import type { User, PublicUser } from "@/types";
+import type { User } from "@/types";
 import * as schema from "@/schema";
 
 export type DatabaseType = DrizzleD1Database<typeof schema>;
@@ -9,7 +9,7 @@ export type DatabaseType = DrizzleD1Database<typeof schema>;
 /**
  * 根据ID查找用户
  */
-export async function getUserById(db: DatabaseType, id: string): Promise<PublicUser | null> {
+export async function getUserById(db: DatabaseType, id: string): Promise<User | null> {
   const result = await db
     .select()
     .from(users)
@@ -21,7 +21,7 @@ export async function getUserById(db: DatabaseType, id: string): Promise<PublicU
   const user = result[0];
   // 返回不包含密码的用户信息
   const { password, ...publicUser } = user;
-  return publicUser as PublicUser;
+  return publicUser as User;
 }
 
 /**
@@ -40,7 +40,7 @@ export async function getUserByEmailWithPassword(db: DatabaseType, email: string
 /**
  * 根据邮箱查找用户（不包含密码）
  */
-export async function getUserByEmail(db: DatabaseType, email: string): Promise<PublicUser | null> {
+export async function getUserByEmail(db: DatabaseType, email: string): Promise<User | null> {
   const result = await db
     .select()
     .from(users)
@@ -52,7 +52,7 @@ export async function getUserByEmail(db: DatabaseType, email: string): Promise<P
   const user = result[0];
   // 返回不包含密码的用户信息
   const { password, ...publicUser } = user;
-  return publicUser as PublicUser;
+  return publicUser as User;
 }
 
 /**
@@ -68,7 +68,7 @@ export interface CreateUserData {
 /**
  * 创建新用户
  */
-export async function createUser(db: DatabaseType, userData: CreateUserData): Promise<PublicUser> {
+export async function createUser(db: DatabaseType, userData: CreateUserData): Promise<User> {
   const result = await db
     .insert(users)
     .values({
@@ -86,7 +86,7 @@ export async function createUser(db: DatabaseType, userData: CreateUserData): Pr
   const user = result[0];
   // 返回不包含密码的用户信息
   const { password, ...publicUser } = user;
-  return publicUser as PublicUser;
+  return publicUser as User;
 }
 
 /**

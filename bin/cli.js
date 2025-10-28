@@ -164,8 +164,17 @@ program
         case "nextjs":
           templates = "nextjs-tailwind";
           break;
+        case "nextjs:prisma":
+          templates = "nextjs-prisma";
+          break;
         case "commerce":
           templates = "cloudflare-commerce";
+          break;
+        case "alchemy:react-router":
+          templates = "alchemy-react-router-v7-drizzle-session";
+          break;
+        case "opennext":
+          templates = "opennext-drizzle-cron";
           break;
       }
 

@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
-import { UserProfile } from "~/components/UserProfile";
 
 // 侧边栏菜单配置
 const adminMenuItems = [
@@ -39,40 +38,10 @@ const adminMenuItems = [
     url: "/admin",
   },
   {
-    title: "商品管理",
-    icon: PackageIcon,
-    url: "/admin/product",
-  },
-  {
     title: "用户管理", 
     icon: UsersIcon,
     url: "/admin/users",
-  },
-  {
-    title: "订单管理",
-    icon: ShoppingBagIcon,
-    url: "/admin/orders",
-  },
-  {
-    title: "类目管理",
-    icon: TagIcon,
-    url: "/admin/categories",
-  },
-  {
-    title: "横幅管理",
-    icon: ImageIcon,
-    url: "/admin/banners",
-  },
-  {
-    title: "统计报表",
-    icon: BarChart3Icon,
-    url: "/admin/statistics",
-  },
-  {
-    title: "系统设置",
-    icon: SettingsIcon,
-    url: "/admin/settings",
-  },
+  }
 ];
 
 interface AdminLayoutProps {
@@ -127,7 +96,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
           <SidebarFooter className="border-t">
             <div className="p-2">
-              <UserProfile />
               <Separator className="my-2" />
               <Button
                 variant="ghost"

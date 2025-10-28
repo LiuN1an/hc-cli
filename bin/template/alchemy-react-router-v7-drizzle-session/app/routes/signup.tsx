@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useActionData, useSubmit, useNavigate } from "react-router";
-import toast from "react-hot-toast";
+import toast from "sonner";
 import type { Route } from "./+types/signup";
 import { EnvContext } from "~/context";
 import { createUser, checkEmailExists } from "~/lib/db-utils";
 import { hashPassword } from "~/lib/crypto";
-import { createSession, createSessionHeaders } from "~/sessions.server";
+import { createSession, createSessionHeaders } from "~/lib/session";
 
 // 注册 Action (POST)
 export async function action({ request, context }: Route.ActionArgs) {

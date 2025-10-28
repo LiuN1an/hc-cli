@@ -1,5 +1,5 @@
 import { randomBytes } from "crypto";
-import type { EnvContextType } from "./context";
+import type { EnvContextType } from "../context";
 
 /**
  * Session数据接口

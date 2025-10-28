@@ -1,6 +1,5 @@
 import type { Route } from "./+types/users";
 import { users } from "@/schema";
-import { eq } from "drizzle-orm";
 import { EnvContext } from "~/context";
 import { hashPassword } from "~/lib/crypto";
 import {

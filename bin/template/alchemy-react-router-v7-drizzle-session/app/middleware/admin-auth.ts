@@ -1,63 +1,32 @@
 import { redirect, type MiddlewareFunction } from "react-router";
-import { UserContext, EnvContext } from "~/context";
-import {
-  getSessionFromRequest,
-  validateSessionDetailed,
-} from "~/sessions.server";
-import { getUserById } from "~/lib/db-utils";
+import { authenticate, setUserContext } from "~/middleware/common";
 
+/**
+ * 管理后台页面专用鉴权中间件
+ * 支持两种认证方式：
+ * 1. Header认证（优先）- 使用 ADMIN_AUTH_HEADER 和 ADMIN_AUTH_SECRET
+ * 2. Session认证（后备）- 使用Cookie中的session
+ * 
+ * 鉴权失败时重定向到 /unauthorized 页面
+ */
 export const adminAuthMiddleware: MiddlewareFunction = async ({
   request,
   context,
 }) => {
-  const { db, sessionKV } = context.get(EnvContext);
+  // 执行通用认证逻辑
+  const authResult = await authenticate(request, context);
 
-  // 从请求中获取session ID
-  const sessionId = getSessionFromRequest(request);
-
-  if (!sessionId) {
-    // 没有session cookie，重定向到登录页面
-    throw redirect("/signin");
+  if (!authResult.success) {
+    // 认证失败，重定向到无权限页面
+    throw redirect("/unauthorized");
   }
 
-  // 验证session，使用增强版本获取详细结果
-  const validationResult = await validateSessionDetailed(
-    sessionKV as any,
-    sessionId
-  );
-
-  if (!validationResult.isValid) {
-    // 根据失败原因决定重定向URL，传递具体的失败原因
-    const reason = validationResult.reason;
-    if (reason === "expired") {
-      // Session过期，重定向时包含过期标识
-      throw redirect("/signin?auth_error=expired&admin_required=true");
-    } else if (reason === "not_found") {
-      // Session不存在，重定向时包含标识
-      throw redirect("/signin?auth_error=not_found&admin_required=true");
-    } else if (reason === "invalid") {
-      // Session无效，重定向时包含标识
-      throw redirect("/signin?auth_error=invalid&admin_required=true");
-    } else {
-      // 未知错误，正常重定向
-      throw redirect("/signin?admin_required=true");
-    }
+  // 验证用户是否为管理员（Header认证自动是admin，session认证需要检查）
+  if (authResult.user.role !== "admin") {
+    // 非管理员用户，跳转到无权限页面
+    throw redirect("/unauthorized");
   }
 
-  // 从数据库获取最新的用户信息
-  const user = await getUserById(db, validationResult.sessionData!.userId);
-  if (!user) {
-    // 用户不存在，清除session
-    await sessionKV.delete(sessionId);
-    throw redirect("/signin?admin_required=true");
-  }
-
-  // 验证用户是否为管理员
-  if (user.role !== "admin") {
-    // 非管理员用户，重定向到首页或显示无权限页面
-    throw redirect("/?error=access_denied");
-  }
-
-  // 将用户信息设置到context中
-  context.set(UserContext, user);
+  // 认证成功，设置用户上下文
+  setUserContext(context, authResult.user);
 };

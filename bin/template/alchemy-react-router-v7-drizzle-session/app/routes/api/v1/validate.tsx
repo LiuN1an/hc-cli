@@ -1,6 +1,6 @@
 import type { Route } from "./+types/validate";
 import { EnvContext } from "~/context";
-import { getTokenFromRequest, verifyJWTToken } from "~/sessions.server";
+import { getTokenFromRequest, verifyJWTToken } from "~/lib/session";
 import { getUserById } from "~/lib/db-utils";
 
 // JWT验证 API (GET)

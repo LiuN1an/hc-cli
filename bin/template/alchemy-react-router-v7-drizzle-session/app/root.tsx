@@ -8,7 +8,7 @@ import {
 } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 
 import type { Route } from "./+types/root";
@@ -22,7 +22,7 @@ const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000, // 10分钟 (原cacheTime)
       retry: (failureCount, error) => {
         // 对于4xx错误不重试
-        if (error instanceof Error && 'status' in error) {
+        if (error instanceof Error && "status" in error) {
           const status = (error as any).status;
           if (status >= 400 && status < 500) return false;
         }
@@ -72,32 +72,7 @@ export default function App() {
       <NuqsAdapter>
         <Outlet />
         <ReactQueryDevtools initialIsOpen={false} />
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            // 默认样式配置 - Light主题
-            duration: 4000,
-            style: {
-              background: '#ffffff', // white
-              color: '#1f2937', // gray-800
-              border: '1px solid #e5e7eb', // gray-200
-            },
-            success: {
-              duration: 3000,
-              iconTheme: {
-                primary: '#10b981', // emerald-500
-                secondary: '#ffffff', // white
-              },
-            },
-            error: {
-              duration: 5000,
-              iconTheme: {
-                primary: '#ef4444', // red-500
-                secondary: '#ffffff', // white
-              },
-            },
-          }}
-        />
+        <Toaster position="top-right" richColors closeButton duration={1500} />
       </NuqsAdapter>
     </QueryClientProvider>
   );

@@ -1,6 +1,6 @@
 import type { Route } from "./+types/logout";
 import { EnvContext } from "~/context";
-import { getSessionFromRequest, destroySession, createLogoutHeaders } from "~/sessions.server";
+import { getSessionFromRequest, destroySession, createLogoutHeaders } from "~/lib/session";
 
 // 登出 API (POST)
 export async function action({ request, context }: Route.ActionArgs) {
