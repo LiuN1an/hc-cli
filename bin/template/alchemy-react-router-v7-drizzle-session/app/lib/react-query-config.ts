@@ -1,6 +1,5 @@
 import { QueryClient } from '@tanstack/react-query';
 import { ApiError } from './api-client';
-import { tokenStorage } from './token-storage';
 
 /**
  * React Query的全局配置
@@ -23,13 +22,9 @@ export function createQueryClient() {
         },
         // 错误处理
         throwOnError: (error) => {
-          // 如果是认证错误，可以在这里处理自动登出
+          // 如果是认证错误，React Router会通过中间件处理重定向
           if (error instanceof ApiError && error.status === 401) {
-            // 清除无效token
-            tokenStorage.remove();
-            // 可以在这里触发重定向到登录页面
-            // 或者发出全局事件
-            console.warn('Authentication expired, please login again');
+            console.warn('Authentication expired, redirecting to login');
             return true; // 继续抛出错误
           }
           return true;
@@ -59,8 +54,8 @@ export function handleGlobalError(error: Error) {
     switch (error.status) {
       case 401:
         console.warn('Authentication expired:', error.message);
-        tokenStorage.remove();
-        // 可以在这里触发全局状态更新或路由跳转
+        // Session由服务端管理，客户端无需清理
+        // React Router中间件会自动处理重定向
         break;
       case 403:
         console.error('Permission denied:', error.message);

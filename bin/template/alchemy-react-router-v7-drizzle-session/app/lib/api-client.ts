@@ -1,5 +1,3 @@
-import { tokenStorage, isTokenExpired } from './token-storage';
-
 // API客户端 - 统一处理API请求
 export class ApiError extends Error {
   constructor(
@@ -19,28 +17,6 @@ export interface ApiResponse<T = any> {
   code?: string;
 }
 
-/**
- * 获取认证headers
- */
-function getAuthHeaders(): Record<string, string> {
-  const token = tokenStorage.get();
-  
-  if (!token) {
-    return {};
-  }
-
-  // 检查token是否过期
-  if (isTokenExpired(token)) {
-    // token过期，清除存储
-    tokenStorage.remove();
-    return {};
-  }
-
-  return {
-    'Authorization': `Bearer ${token}`
-  };
-}
-
 // 通用API请求函数
 export async function apiRequest<T = any>(
   endpoint: string,
@@ -48,13 +24,13 @@ export async function apiRequest<T = any>(
 ): Promise<T> {
   const url = endpoint.startsWith('http') ? endpoint : `/api/v1/${endpoint}`;
   
-  // 合并认证headers
-  const authHeaders = getAuthHeaders();
+  // Check if there's FormData, if so don't set Content-Type
+  const isFormData = options.body instanceof FormData;
   
   const config: RequestInit = {
+    credentials: 'include', // 确保发送Cookie（session认证需要）
     headers: {
-      'Content-Type': 'application/json',
-      ...authHeaders,
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...options.headers,
     },
     ...options,
@@ -65,11 +41,6 @@ export async function apiRequest<T = any>(
     const data: ApiResponse<T> = await response.json();
 
     if (!response.ok || !data.success) {
-      // 如果是401错误，可能是token过期或无效
-      if (response.status === 401) {
-        tokenStorage.remove(); // 清除无效token
-      }
-      
       throw new ApiError(
         response.status,
         data.code || 'UNKNOWN_ERROR',
@@ -93,12 +64,32 @@ export async function apiRequest<T = any>(
 }
 
 // GET请求
-export function apiGet<T = any>(endpoint: string): Promise<T> {
-  return apiRequest<T>(endpoint, { method: 'GET' });
+export function apiGet<T = any>(
+  endpoint: string, 
+  options?: RequestInit & { disableCache?: boolean }
+): Promise<T> {
+  const { disableCache, ...fetchOptions } = options || {};
+  
+  return apiRequest<T>(endpoint, { 
+    method: 'GET',
+    ...(disableCache ? { cache: 'no-store' } : {}), // 仅在需要时禁用缓存
+    ...fetchOptions 
+  });
 }
 
 // POST请求
 export function apiPost<T = any>(endpoint: string, data?: any): Promise<T> {
+  // If it's FormData, don't set Content-Type to let browser automatically set boundary
+  if (data instanceof FormData) {
+    return apiRequest<T>(endpoint, {
+      method: 'POST',
+      body: data,
+      headers: {
+        // Don't set Content-Type, let browser handle FormData automatically
+      },
+    });
+  }
+  
   return apiRequest<T>(endpoint, {
     method: 'POST',
     body: data ? JSON.stringify(data) : undefined,
@@ -114,6 +105,9 @@ export function apiPut<T = any>(endpoint: string, data?: any): Promise<T> {
 }
 
 // DELETE请求
-export function apiDelete<T = any>(endpoint: string): Promise<T> {
-  return apiRequest<T>(endpoint, { method: 'DELETE' });
+export function apiDelete<T = any>(endpoint: string, data?: any): Promise<T> {
+  return apiRequest<T>(endpoint, {
+    method: 'DELETE',
+    body: data ? JSON.stringify(data) : undefined,
+  });
 }

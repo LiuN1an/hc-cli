@@ -1,3 +1,4 @@
+import type { Route } from "./+types/root";
 import {
   isRouteErrorResponse,
   Links,
@@ -8,32 +9,13 @@ import {
 } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { Toaster } from "sonner";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
+import { createQueryClient } from "~/lib/react-query-config";
+import { Toaster } from "sonner";
 
-import type { Route } from "./+types/root";
 import "./app.css";
 
-// 创建全局QueryClient实例
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5分钟
-      gcTime: 10 * 60 * 1000, // 10分钟 (原cacheTime)
-      retry: (failureCount, error) => {
-        // 对于4xx错误不重试
-        if (error instanceof Error && "status" in error) {
-          const status = (error as any).status;
-          if (status >= 400 && status < 500) return false;
-        }
-        return failureCount < 3;
-      },
-    },
-    mutations: {
-      retry: false,
-    },
-  },
-});
+const queryClient = createQueryClient();
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
