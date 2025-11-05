@@ -16,7 +16,6 @@ export const worker = await ReactRouter("website", {
     DB: db,
     SESSION_KV: sessionKV,
     SESSION_EXPIRY: process.env.SESSION_EXPIRY || "604800", // 默认7天(604800秒)
-
   },
 });
 
