@@ -1,25 +1,61 @@
+/**
+ * React Router Contexts
+ *
+ * 在 workers/app.ts 中设置，在路由中通过 context.get() 获取
+ */
+
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { createContext } from "react-router";
 import * as schema from "@/schema";
-import type { User } from "@/types";
+import type { PublicUser } from "@/types";
 
-// 定义明确的Context类型
+/**
+ * 环境上下文类型
+ */
 export interface EnvContextType {
   cloudflare: { env: Env; ctx: ExecutionContext };
   db: DrizzleD1Database<typeof schema>;
-  sessionKV: KVNamespace; // 明确使用 Cloudflare Workers 运行时类型
+  sessionKV: KVNamespace;
   sessionExpiry: string;
+  authTokenKey: string;
+  authTokenValue: string;
 }
 
+/**
+ * 环境上下文 - 包含数据库、KV 等运行时资源
+ */
 export const EnvContext = createContext<EnvContextType>();
 
-export const UserContext = createContext<User | null>(null);
+/**
+ * 用户上下文 - 在认证中间件中设置
+ */
+export const UserContext = createContext<PublicUser | null>(null);
 
-// 类型守卫函数，确保context不为空
+/**
+ * 获取环境上下文（带类型守卫）
+ */
 export function getEnvContext(context: any): EnvContextType {
   const envContext = context.get(EnvContext);
   if (!envContext) {
-    throw new Error("EnvContext not found in request context");
+    throw new Error("EnvContext not found");
   }
   return envContext;
+}
+
+/**
+ * 获取用户上下文
+ */
+export function getUserContext(context: any): PublicUser | null {
+  return context.get(UserContext) || null;
+}
+
+/**
+ * 获取用户上下文（必须登录）
+ */
+export function requireUserContext(context: any): PublicUser {
+  const user = context.get(UserContext);
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+  return user;
 }

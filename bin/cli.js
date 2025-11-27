@@ -1,54 +1,126 @@
 #!/usr/bin/env node
 
-const program = require("commander");
+const { program } = require("commander");
 const path = require("path");
 const inquirer = require("inquirer");
-const exec = require("child_process").exec;
 const fs = require("fs");
+const os = require("os");
 
-const rootPath = "js-project-template";
-const templatePrefix = "hcTest";
+// 模板目录
+const TEMPLATE_DIR = path.join(__dirname, "template");
 
-let opsys = process.platform;
-if (opsys == "darwin") {
-  opsys = "MacOS";
-} else if (opsys == "win32" || opsys == "win64") {
-  opsys = "Windows";
-} else if (opsys == "linux") {
-  opsys = "Linux";
-}
+// 配置文件路径
+const CONFIG_DIR = path.join(os.homedir(), ".hc-cli");
+const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 
-const generateNewName = (oldName) => {
-  return Number(oldName) + 1 + "";
+// 默认项目目录（按系统区分）
+const DEFAULT_PROJECT_DIR = {
+  darwin: path.join(os.homedir(), "Projects"),
+  win32: path.join(os.homedir(), "Projects"),
+  linux: path.join(os.homedir(), "Projects"),
 };
 
-const copyFileSync = (source, target) => {
-  var targetFile = target;
+// 模板显示名称映射
+const TEMPLATE_DISPLAY_NAMES = {
+  "alchemy-react-router-v7-drizzle-session": "Alchemy + React Router v7 + Drizzle + Session",
+  "cloudflare-commerce": "Cloudflare Commerce (Next.js)",
+  "electron-react": "Electron + React",
+  "nextjs-prisma": "Next.js + Prisma",
+  "nextjs-tailwind": "Next.js + Tailwind",
+  "opennext-drizzle-cron": "OpenNext + Drizzle + Cron",
+  "react-tailwind-chrome-extensions": "Chrome Extension (React + Tailwind)",
+  "react-webpack-tailwind": "React + Webpack + Tailwind",
+};
 
-  if (fs.existsSync(target)) {
-    if (fs.lstatSync(target).isDirectory()) {
-      targetFile = path.join(target, path.basename(source));
+// ==================== 配置管理 ====================
+
+/**
+ * 读取配置
+ */
+const loadConfig = () => {
+  try {
+    if (fs.existsSync(CONFIG_FILE)) {
+      return JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
     }
+  } catch (e) {
+    console.error("读取配置失败:", e.message);
+  }
+  return {};
+};
+
+/**
+ * 保存配置
+ */
+const saveConfig = (config) => {
+  try {
+    if (!fs.existsSync(CONFIG_DIR)) {
+      fs.mkdirSync(CONFIG_DIR, { recursive: true });
+    }
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
+    return true;
+  } catch (e) {
+    console.error("保存配置失败:", e.message);
+    return false;
+  }
+};
+
+/**
+ * 获取默认项目目录
+ */
+const getDefaultProjectDir = () => {
+  const config = loadConfig();
+  if (config.defaultDir) {
+    return config.defaultDir;
+  }
+  return DEFAULT_PROJECT_DIR[process.platform] || path.join(os.homedir(), "Projects");
+};
+
+// ==================== 工具函数 ====================
+
+/**
+ * 获取所有可用模板
+ */
+const getAvailableTemplates = () => {
+  const templates = fs.readdirSync(TEMPLATE_DIR).filter((name) => {
+    const templatePath = path.join(TEMPLATE_DIR, name);
+    return fs.statSync(templatePath).isDirectory();
+  });
+
+  return templates.map((dir) => ({
+    name: TEMPLATE_DISPLAY_NAMES[dir] || dir,
+    value: dir,
+  }));
+};
+
+/**
+ * 递归复制文件
+ */
+const copyFileSync = (source, target) => {
+  let targetFile = target;
+
+  if (fs.existsSync(target) && fs.lstatSync(target).isDirectory()) {
+    targetFile = path.join(target, path.basename(source));
   }
 
   fs.writeFileSync(targetFile, fs.readFileSync(source));
 };
 
-const copySync = (source, target, depth = 1) => {
-  var files = [];
+/**
+ * 递归复制目录
+ */
+const copySync = (source, target, isRoot = true) => {
+  const targetFolder = isRoot ? target : path.join(target, path.basename(source));
 
-  var targetFolder =
-    depth !== 1 ? path.join(target, path.basename(source)) : target;
-  if (!fs.existsSync(targetFolder) && depth !== 1) {
-    fs.mkdirSync(targetFolder);
+  if (!isRoot && !fs.existsSync(targetFolder)) {
+    fs.mkdirSync(targetFolder, { recursive: true });
   }
 
   if (fs.lstatSync(source).isDirectory()) {
-    files = fs.readdirSync(source);
-    files.forEach(function (file) {
-      var curSource = path.join(source, file);
+    const files = fs.readdirSync(source);
+    files.forEach((file) => {
+      const curSource = path.join(source, file);
       if (fs.lstatSync(curSource).isDirectory()) {
-        copySync(curSource, targetFolder, depth + 1);
+        copySync(curSource, targetFolder, false);
       } else {
         copyFileSync(curSource, targetFolder);
       }
@@ -56,139 +128,209 @@ const copySync = (source, target, depth = 1) => {
   }
 };
 
-const updatePackageJson = (path, cb) => {
-  const file = `${path}/package.json`;
+/**
+ * 更新 package.json
+ */
+const updatePackageJson = (projectPath, updateFn) => {
+  const filePath = path.join(projectPath, "package.json");
   try {
-    const packageJson = fs.readFileSync(file);
-    const package = JSON.parse(packageJson);
-    const result = JSON.stringify(cb(package));
-    fs.writeFileSync(file, result);
+    const packageJson = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    const updated = updateFn(packageJson);
+    fs.writeFileSync(filePath, JSON.stringify(updated, null, 2));
   } catch (e) {
-    console.error("update package.json error -> ", e);
+    console.error("更新 package.json 失败:", e.message);
   }
 };
 
+/**
+ * 生成项目名
+ */
+const generateProjectName = (basePath, prefix = "project") => {
+  if (!fs.existsSync(basePath)) return `${prefix}-1`;
+
+  const existing = fs
+    .readdirSync(basePath)
+    .filter((name) => name.startsWith(`${prefix}-`))
+    .map((name) => parseInt(name.split("-")[1], 10))
+    .filter((num) => !isNaN(num));
+
+  const nextNum = existing.length > 0 ? Math.max(...existing) + 1 : 1;
+  return `${prefix}-${nextNum}`;
+};
+
+// ==================== 命令定义 ====================
+
+// set 命令组
+const setCmd = program.command("set").description("配置管理");
+
+// hc set default <path> - 设置默认目录
+setCmd
+  .command("default [path]")
+  .description("设置默认项目创建目录")
+  .action((inputPath) => {
+    const config = loadConfig();
+
+    if (!inputPath) {
+      // 没有参数，显示当前配置
+      const currentDefault = config.defaultDir || getDefaultProjectDir();
+      console.log(`\n当前默认目录: ${currentDefault}`);
+      console.log(`配置文件: ${CONFIG_FILE}\n`);
+      return;
+    }
+
+    const targetPath = path.resolve(inputPath);
+
+    // 创建目录（如果不存在）
+    if (!fs.existsSync(targetPath)) {
+      try {
+        fs.mkdirSync(targetPath, { recursive: true });
+        console.log(`已创建目录: ${targetPath}`);
+      } catch (e) {
+        console.error(`创建目录失败: ${e.message}`);
+        process.exit(1);
+      }
+    }
+
+    config.defaultDir = targetPath;
+    if (saveConfig(config)) {
+      console.log(`\n✅ 默认目录已设置为: ${targetPath}\n`);
+    }
+  });
+
+// hc set current - 把当前目录设为默认
+setCmd
+  .command("current")
+  .description("将当前目录设为默认项目创建目录")
+  .action(() => {
+    const currentDir = process.cwd();
+    const config = loadConfig();
+
+    config.defaultDir = currentDir;
+    if (saveConfig(config)) {
+      console.log(`\n✅ 默认目录已设置为当前目录: ${currentDir}\n`);
+    }
+  });
+
+// hc config - 查看所有配置
+program
+  .command("config")
+  .description("查看当前配置")
+  .action(() => {
+    const config = loadConfig();
+    const defaultDir = getDefaultProjectDir();
+
+    console.log("\n当前配置:");
+    console.log("─".repeat(40));
+    console.log(`默认项目目录: ${defaultDir}`);
+    console.log(`配置文件位置: ${CONFIG_FILE}`);
+    console.log(`系统平台: ${process.platform}`);
+    console.log("─".repeat(40));
+
+    if (Object.keys(config).length > 0) {
+      console.log("\n配置详情:");
+      console.log(JSON.stringify(config, null, 2));
+    }
+    console.log("");
+  });
+
+// hc create - 创建项目
 program
   .command("create")
-  .description("hkw cli")
-  .action(async () => {
-    exec("wmic logicaldisk get caption", async (_, stdout) => {
-      const out = stdout.toString().replace(/ /g, "");
-      let pathRoute = "";
-      if (opsys === "Windows") {
-        let answer = await inquirer.prompt([
-          {
-            type: "list",
-            name: "dir",
-            message: "请选择盘符",
-            default: "E",
-            choices: out
-              .split(/[\r\n]+/)
-              .filter((str) => str)
-              .map((str) => str.slice(0, str.length - 1))
-              .slice(1),
-          },
-        ]);
-        const { dir } = answer;
-        pathRoute = `${dir}:/${rootPath}`;
-      } else {
-        const os = require("os");
-        pathRoute = os.homedir();
-      }
-      console.log(pathRoute);
+  .description("创建新项目")
+  .option("-d, --dir <directory>", "项目创建目录（不指定则使用默认目录）")
+  .action(async (options) => {
+    // 确定目标目录
+    const targetDir = options.dir ? path.resolve(options.dir) : getDefaultProjectDir();
 
-      if (!fs.existsSync(pathRoute)) {
-        fs.mkdirSync(pathRoute);
-      }
-      const nameList = fs
-        .readdirSync(pathRoute)
-        .filter((name) => name.startsWith(`${templatePrefix}-`))
-        .map((name) => name.split("-")[1]);
-      let defaultName = `${templatePrefix}-0`;
-      if (nameList.length > 0) {
-        nameList.sort();
-        defaultName = `${templatePrefix}-${generateNewName(
-          nameList[nameList.length - 1]
-        )}`;
-      }
+    // 确保目标目录存在
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+      console.log(`已创建目录: ${targetDir}`);
+    }
 
-      answer = await inquirer.prompt([
+    console.log(`\n项目将创建在: ${targetDir}\n`);
+
+    // 获取可用模板
+    const templates = getAvailableTemplates();
+    if (templates.length === 0) {
+      console.error("没有找到可用模板");
+      process.exit(1);
+    }
+
+    // 选择模板
+    const { template } = await inquirer.prompt([
+      {
+        type: "list",
+        name: "template",
+        message: "选择项目模板",
+        choices: templates,
+      },
+    ]);
+
+    // 输入项目名
+    const defaultName = generateProjectName(targetDir);
+    let projectName;
+
+    while (true) {
+      const { name } = await inquirer.prompt([
         {
-          type: "list",
-          name: "choose_template",
-          message: "请选择模板类型",
-          default: "web",
-          choices: [
-            "web",
-            "electron",
-            "chrome-extension",
-            "nextjs",
-            "commerce",
-          ],
+          type: "input",
+          name: "name",
+          message: "项目名称",
+          default: defaultName,
+          validate: (input) => {
+            if (!input.trim()) return "项目名称不能为空";
+            if (!/^[a-zA-Z0-9_-]+$/.test(input)) {
+              return "项目名称只能包含字母、数字、下划线和连字符";
+            }
+            return true;
+          },
         },
       ]);
-      const { choose_template } = answer;
-      let project;
-      while (true) {
-        answer = await inquirer.prompt([
-          {
-            type: "input",
-            name: "project",
-            message: "请输入项目别名",
-            default: defaultName,
-          },
-        ]);
-        const { project: p } = answer;
-        project = p;
-        if (fs.existsSync(`${pathRoute}/${project}`)) {
-          console.log("重名，请重新输入");
-          continue;
-        } else {
-          break;
-        }
+
+      projectName = name.trim();
+      const projectPath = path.join(targetDir, projectName);
+
+      if (fs.existsSync(projectPath)) {
+        console.log(`目录 ${projectName} 已存在，请重新输入`);
+        continue;
       }
-      fs.mkdirSync(`${pathRoute}/${project}`);
+      break;
+    }
 
-      let templates = "";
+    // 创建项目
+    const projectPath = path.join(targetDir, projectName);
+    const templatePath = path.join(TEMPLATE_DIR, template);
 
-      switch (choose_template) {
-        case "web":
-          templates = "react-webpack-tailwind";
-          break;
-        case "electron":
-          templates = "electron-react";
-          break;
-        case "chrome-extension":
-          templates = "react-tailwind-chrome-extensions";
-          break;
-        case "nextjs":
-          templates = "nextjs-tailwind";
-          break;
-        case "nextjs:prisma":
-          templates = "nextjs-prisma";
-          break;
-        case "commerce":
-          templates = "cloudflare-commerce";
-          break;
-        case "alchemy:react-router":
-          templates = "alchemy-react-router-v7-drizzle-session";
-          break;
-        case "opennext":
-          templates = "opennext-drizzle-cron";
-          break;
-      }
+    console.log(`\n正在创建项目 ${projectName}...`);
 
-      const source = path.join(__dirname, `./template/${templates}`);
-      const target = `${pathRoute}/${project}/`;
+    fs.mkdirSync(projectPath, { recursive: true });
+    copySync(templatePath, projectPath);
 
-      copySync(source, target);
+    // 更新 package.json
+    updatePackageJson(projectPath, (pkg) => {
+      pkg.name = projectName;
+      return pkg;
+    });
 
-      updatePackageJson(`${pathRoute}/${project}`, (json) => {
-        json["name"] = project;
-        return json;
-      });
-      console.log(`cd ${pathRoute}/${project}`);
-      console.log("npm install");
+    // 输出后续步骤
+    console.log("\n✅ 项目创建成功！\n");
+    console.log("后续步骤:");
+    console.log(`  cd ${projectPath}`);
+    console.log("  pnpm install  # 或 npm install / yarn");
+    console.log("");
+  });
+
+// hc list - 列出模板
+program
+  .command("list")
+  .description("列出所有可用模板")
+  .action(() => {
+    const templates = getAvailableTemplates();
+    console.log("\n可用模板:\n");
+    templates.forEach((t, i) => {
+      console.log(`  ${i + 1}. ${t.name}`);
+      console.log(`     目录: ${t.value}\n`);
     });
   });
 

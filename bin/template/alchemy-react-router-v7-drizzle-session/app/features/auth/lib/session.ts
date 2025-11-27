@@ -1,8 +1,7 @@
 import { randomBytes } from "crypto";
-import type { EnvContextType } from "../context";
 
 /**
- * Session数据接口
+ * Session 数据接口
  */
 export interface SessionData {
   userId: string;
@@ -13,14 +12,23 @@ export interface SessionData {
 }
 
 /**
- * 生成随机的session ID
+ * Session 验证结果接口
+ */
+export interface SessionValidationResult {
+  isValid: boolean;
+  sessionData?: SessionData;
+  reason?: "not_found" | "expired" | "invalid";
+}
+
+/**
+ * 生成随机的 session ID
  */
 function generateSessionId(): string {
   return randomBytes(32).toString("hex");
 }
 
 /**
- * 创建session ID，格式为 userId:randomId
+ * 创建 session ID，格式为 userId:randomId
  */
 function createSessionKey(userId: string): string {
   const randomId = generateSessionId();
@@ -28,7 +36,7 @@ function createSessionKey(userId: string): string {
 }
 
 /**
- * 解析cookie中的session ID
+ * 解析 cookie 中的 session ID
  */
 function parseSessionFromCookie(
   cookieValue: string
@@ -50,10 +58,10 @@ function parseSessionFromCookie(
 }
 
 /**
- * 创建新的session
+ * 创建新的 session
  */
 export async function createSession(
-  sessionKV: EnvContextType["sessionKV"],
+  sessionKV: KVNamespace,
   sessionExpiry: string,
   user: { id: string; email: string; role: string }
 ): Promise<string> {
@@ -69,7 +77,7 @@ export async function createSession(
     expiresAt: now + expirySeconds * 1000,
   };
 
-  // 存储到KV，设置过期时间
+  // 存储到 KV，设置过期时间
   await sessionKV.put(sessionId, JSON.stringify(sessionData), {
     expirationTtl: expirySeconds,
   });
@@ -78,19 +86,10 @@ export async function createSession(
 }
 
 /**
- * Session验证结果接口
- */
-export interface SessionValidationResult {
-  isValid: boolean;
-  sessionData?: SessionData;
-  reason?: "not_found" | "expired" | "invalid";
-}
-
-/**
- * 验证session - 增强版本，返回详细的验证结果
+ * 验证 session - 增强版本，返回详细的验证结果
  */
 export async function validateSessionDetailed(
-  sessionKV: EnvContextType["sessionKV"],
+  sessionKV: KVNamespace,
   sessionId: string
 ): Promise<SessionValidationResult> {
   try {
@@ -107,12 +106,12 @@ export async function validateSessionDetailed(
 
     // 检查是否过期
     if (sessionData.expiresAt < now) {
-      // 过期了，删除KV中的记录
+      // 过期了，删除 KV 中的记录
       await sessionKV.delete(sessionId);
       return {
         isValid: false,
         reason: "expired",
-        sessionData, // 返回过期的session数据，用于显示用户信息
+        sessionData, // 返回过期的 session 数据，用于显示用户信息
       };
     }
 
@@ -121,7 +120,7 @@ export async function validateSessionDetailed(
       sessionData,
     };
   } catch (error) {
-    console.error("验证session失败:", error);
+    console.error("验证 session 失败:", error);
     return {
       isValid: false,
       reason: "invalid",
@@ -130,10 +129,10 @@ export async function validateSessionDetailed(
 }
 
 /**
- * 验证session - 保持向后兼容
+ * 验证 session - 简化版本
  */
 export async function validateSession(
-  sessionKV: EnvContextType["sessionKV"],
+  sessionKV: KVNamespace,
   sessionId: string
 ): Promise<SessionData | null> {
   const result = await validateSessionDetailed(sessionKV, sessionId);
@@ -141,21 +140,21 @@ export async function validateSession(
 }
 
 /**
- * 删除session
+ * 删除 session
  */
 export async function destroySession(
-  sessionKV: EnvContextType["sessionKV"],
+  sessionKV: KVNamespace,
   sessionId: string
 ): Promise<void> {
   try {
     await sessionKV.delete(sessionId);
   } catch (error) {
-    console.error("删除session失败:", error);
+    console.error("删除 session 失败:", error);
   }
 }
 
 /**
- * 从请求中获取session ID
+ * 从请求中获取 session ID
  */
 export function getSessionFromRequest(request: Request): string | null {
   const cookieHeader = request.headers.get("Cookie");
@@ -174,7 +173,7 @@ export function getSessionFromRequest(request: Request): string | null {
 }
 
 /**
- * 从请求中获取并解析session信息
+ * 从请求中获取并解析 session 信息
  */
 export function parseSessionFromRequest(
   request: Request
@@ -188,7 +187,7 @@ export function parseSessionFromRequest(
 }
 
 /**
- * 创建session cookie响应头
+ * 创建 session cookie 响应头
  */
 export function createSessionHeaders(
   sessionId: string,
@@ -206,7 +205,7 @@ export function createSessionHeaders(
 }
 
 /**
- * 创建清除session cookie的响应头
+ * 创建清除 session cookie 的响应头
  */
 export function createLogoutHeaders(): Headers {
   const headers = new Headers();
@@ -218,49 +217,57 @@ export function createLogoutHeaders(): Headers {
 }
 
 /**
- * 传统session兼容接口 - 保持向后兼容
+ * 从请求头获取指定 key 的 token
  */
-export async function getSession(request: Request) {
+export function getAuthTokenFromRequest(
+  request: Request,
+  tokenKey: string
+): string | null {
+  return request.headers.get(tokenKey);
+}
+
+/**
+ * 认证结果类型
+ */
+export type AuthResult =
+  | { type: "session"; sessionData: SessionData }
+  | { type: "token"; isAdmin: true }
+  | { type: "none"; reason: string };
+
+/**
+ * 统一认证函数 - 支持 session 和 auth_token 双重验证
+ *
+ * 优先级：auth_token > session
+ * 当 auth_token 匹配时，直接授予管理员权限（用于数据库未初始化时）
+ *
+ * @param request - 请求对象
+ * @param sessionKV - Session KV 存储
+ * @param authTokenKey - Token 请求头 Key（如 x-admin-token）
+ * @param authTokenValue - Token 值
+ */
+export async function authenticateRequest(
+  request: Request,
+  sessionKV: KVNamespace,
+  authTokenKey: string,
+  authTokenValue: string
+): Promise<AuthResult> {
+  // 1. 优先检查 auth_token 请求头
+  const headerToken = getAuthTokenFromRequest(request, authTokenKey);
+  if (headerToken && headerToken === authTokenValue) {
+    return { type: "token", isAdmin: true };
+  }
+
+  // 2. 检查 session
   const sessionId = getSessionFromRequest(request);
+  if (!sessionId) {
+    return { type: "none", reason: "未提供认证信息" };
+  }
 
-  return {
-    get: (key: string) => {
-      // 这个方法在新的实现中不再使用，因为session验证在middleware中完成
-      console.warn(
-        "getSession().get() 在新的session实现中已弃用，请使用context中的用户信息"
-      );
-      return null;
-    },
-    set: () => {
-      console.warn(
-        "getSession().set() 在新的session实现中已弃用，请使用createSession"
-      );
-    },
-    destroy: () => {
-      console.warn(
-        "getSession().destroy() 在新的session实现中已弃用，请使用destroySession"
-      );
-    },
-  };
+  const sessionData = await validateSession(sessionKV, sessionId);
+  if (!sessionData) {
+    return { type: "none", reason: "会话已过期" };
+  }
+
+  return { type: "session", sessionData };
 }
 
-// 保留原来的JWT相关导出以保持兼容性，但标记为已弃用
-export function getTokenFromRequest(request: Request): string | null {
-  console.warn("getTokenFromRequest 已弃用，请使用 getSessionFromRequest");
-  return getSessionFromRequest(request);
-}
-
-export async function verifyJWTToken(token: string): Promise<any> {
-  console.warn("verifyJWTToken 已弃用，请使用 validateSession");
-  return null;
-}
-
-export async function createJWTToken(payload: any): Promise<string> {
-  console.warn("createJWTToken 已弃用，请使用 createSession");
-  return "";
-}
-
-export function createAuthHeaders(token: string): Headers {
-  console.warn("createAuthHeaders 已弃用，请使用 createSessionHeaders");
-  return new Headers();
-}

@@ -2,6 +2,15 @@
   "type": "module",
   "name": "web",
   "private": true,
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "better-sqlite3",
+      "esbuild",
+      "sharp",
+      "workerd"
+    ]
+  },
   "scripts": {
     "build": "react-router build",
     "deploy": "ALCHEMY_ENV=production alchemy deploy",
@@ -14,6 +23,10 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "node scripts/db-utils.js studio",
     "db:seed": "bun scripts/db-seed.js",
+    "db:seed:users": "bun scripts/db-seed.js users",
+    "db:seed:admin": "bun scripts/db-seed.js users:admin",
+    "db:seed:clear": "bun scripts/db-seed.js clear",
+    "db:seed:stats": "bun scripts/db-seed.js stats",
     "analyze:build": "node scripts/analyze-build-size.js"
   },
   "dependencies": {

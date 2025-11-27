@@ -18,6 +18,8 @@ export default {
       db,
       sessionKV: env.SESSION_KV,
       sessionExpiry: env.SESSION_EXPIRY || "604800",
+      authTokenKey: env.AUTH_TOKEN_KEY || "x-admin-token",
+      authTokenValue: env.AUTH_TOKEN_VALUE || "change-me-in-production",
     });
     return requestHandler(request, rootContext);
   },
