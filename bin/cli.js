@@ -26,7 +26,7 @@ const TEMPLATE_DISPLAY_NAMES = {
   "cloudflare-commerce": "Cloudflare Commerce (Next.js)",
   "electron-react": "Electron + React",
   "nextjs-prisma": "Next.js + Prisma",
-  "nextjs-tailwind": "Next.js + Tailwind",
+  "nextjs": "Next.js + Tailwind",
   "opennext-drizzle-cron": "OpenNext + Drizzle + Cron",
   "react-tailwind-chrome-extensions": "Chrome Extension (React + Tailwind)",
   "react-webpack-tailwind": "React + Webpack + Tailwind",

@@ -1,0 +1,31 @@
+{
+  "title": "Demo Form",
+  "description": "This form demonstrates the integration of react-hook-form, zod validation, and sonner toast",
+  "fields": {
+    "name": "Name",
+    "namePlaceholder": "Enter your name",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
+    "role": "Role",
+    "rolePlaceholder": "Select a role",
+    "subscribe": "Subscribe to newsletter"
+  },
+  "roles": {
+    "developer": "Developer",
+    "designer": "Designer",
+    "manager": "Manager",
+    "other": "Other"
+  },
+  "validation": {
+    "nameRequired": "Name is required",
+    "nameMin": "Name must be at least 2 characters",
+    "emailRequired": "Email is required",
+    "emailInvalid": "Invalid email format",
+    "roleRequired": "Please select a role"
+  },
+  "submitButton": "Submit",
+  "submitting": "Submitting...",
+  "successMessage": "Form submitted successfully!",
+  "errorMessage": "Something went wrong, please try again"
+}
+

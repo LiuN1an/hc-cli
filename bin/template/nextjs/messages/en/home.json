@@ -1,0 +1,15 @@
+{
+  "title": "Welcome to Next.js Template",
+  "subtitle": "A modern web development template with best practices",
+  "getStarted": "Get Started",
+  "learnMore": "Learn More",
+  "features": {
+    "title": "Features",
+    "i18n": "Internationalization with next-intl",
+    "form": "Form handling with react-hook-form + zod",
+    "ui": "UI components with shadcn/ui",
+    "toast": "Toast notifications with sonner",
+    "queryState": "URL state management with nuqs"
+  }
+}
+
