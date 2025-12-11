@@ -1,0 +1,213 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* 复古字体系统：手写体 + 衬线体 + 无衬线体 */
+  --font-handwriting: "Caveat", "Dancing Script", cursive;
+  --font-serif: "Playfair Display", "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Crimson Pro", "Source Serif 4", Georgia, serif;
+}
+
+html,
+body {
+  @apply bg-background text-foreground;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+}
+
+/* 复古暖色调配色 - 奶油色、棕褐色、酒红色 */
+:root {
+  --radius: 0.25rem;
+  /* 奶油色背景 */
+  --background: oklch(0.97 0.01 85);
+  /* 深棕色文字 */
+  --foreground: oklch(0.25 0.02 50);
+  /* 米白色卡片 */
+  --card: oklch(0.99 0.005 85);
+  --card-foreground: oklch(0.25 0.02 50);
+  --popover: oklch(0.99 0.005 85);
+  --popover-foreground: oklch(0.25 0.02 50);
+  /* 酒红色主色 */
+  --primary: oklch(0.45 0.15 25);
+  --primary-foreground: oklch(0.98 0.01 85);
+  /* 淡棕色次要色 */
+  --secondary: oklch(0.92 0.02 70);
+  --secondary-foreground: oklch(0.35 0.03 50);
+  /* 浅灰棕色 */
+  --muted: oklch(0.94 0.015 75);
+  --muted-foreground: oklch(0.5 0.02 60);
+  /* 淡金色强调 */
+  --accent: oklch(0.88 0.06 85);
+  --accent-foreground: oklch(0.3 0.03 50);
+  /* 暗红色警告 */
+  --destructive: oklch(0.5 0.2 25);
+  /* 棕色边框 */
+  --border: oklch(0.85 0.03 70);
+  --input: oklch(0.88 0.02 75);
+  --ring: oklch(0.45 0.15 25);
+  /* 复古图表色 */
+  --chart-1: oklch(0.45 0.15 25);
+  --chart-2: oklch(0.55 0.12 85);
+  --chart-3: oklch(0.5 0.1 150);
+  --chart-4: oklch(0.6 0.08 220);
+  --chart-5: oklch(0.55 0.1 45);
+}
+
+/* 深色模式 - 复古深棕色 */
+.dark {
+  /* 深棕色背景 */
+  --background: oklch(0.18 0.02 50);
+  /* 奶油色文字 */
+  --foreground: oklch(0.92 0.015 85);
+  /* 深棕卡片 */
+  --card: oklch(0.22 0.025 50);
+  --card-foreground: oklch(0.92 0.015 85);
+  --popover: oklch(0.22 0.025 50);
+  --popover-foreground: oklch(0.92 0.015 85);
+  /* 金色主色 */
+  --primary: oklch(0.75 0.12 85);
+  --primary-foreground: oklch(0.18 0.02 50);
+  /* 深棕次要色 */
+  --secondary: oklch(0.28 0.03 50);
+  --secondary-foreground: oklch(0.88 0.015 85);
+  /* 深灰棕 */
+  --muted: oklch(0.28 0.025 55);
+  --muted-foreground: oklch(0.7 0.02 70);
+  /* 深金色强调 */
+  --accent: oklch(0.35 0.05 60);
+  --accent-foreground: oklch(0.88 0.015 85);
+  /* 暗红警告 */
+  --destructive: oklch(0.55 0.18 25);
+  /* 深色边框 */
+  --border: oklch(0.35 0.03 55);
+  --input: oklch(0.32 0.025 55);
+  --ring: oklch(0.75 0.12 85);
+  /* 深色图表色 */
+  --chart-1: oklch(0.75 0.12 85);
+  --chart-2: oklch(0.55 0.1 150);
+  --chart-3: oklch(0.6 0.12 25);
+  --chart-4: oklch(0.5 0.08 220);
+  --chart-5: oklch(0.65 0.1 45);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  /* 精致的文字渲染 */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif tracking-tight;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* 手写体工具类 */
+@utility font-handwriting {
+  font-family: var(--font-handwriting);
+}
+
+/* 衬线体工具类 */
+@utility font-serif {
+  font-family: var(--font-serif);
+}
+
+/* 复古装饰线 - 使用普通 CSS */
+.ornament {
+  position: relative;
+}
+
+.ornament::before {
+  content: "❦";
+  display: block;
+  text-align: center;
+  font-size: 1.5rem;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+/* 纸张质感背景 */
+@utility paper-texture {
+  background-image: 
+    radial-gradient(ellipse at 50% 0%, oklch(1 0 0 / 0.15) 0%, transparent 75%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* NProgress 样式 - 复古金色 */
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  background: var(--primary);
+  position: fixed;
+  z-index: 1031;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+}
+
+#nprogress .peg {
+  display: block;
+  position: absolute;
+  right: 0px;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px var(--primary), 0 0 5px var(--primary);
+  opacity: 1;
+  transform: rotate(3deg) translate(0px, -4px);
+}
+
+/* 复古按钮悬停效果 */
+button, [role="button"] {
+  transition: all 0.2s ease-in-out;
+}
+
+/* 精致的卡片阴影 */
+[data-slot="card"] {
+  box-shadow: 
+    0 1px 2px oklch(0 0 0 / 0.04),
+    0 2px 4px oklch(0 0 0 / 0.04),
+    0 4px 8px oklch(0 0 0 / 0.04);
+}
+
+/* 复古选中效果 */
+::selection {
+  background: oklch(0.75 0.12 85 / 0.3);
+  color: oklch(0.25 0.02 50);
+}

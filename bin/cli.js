@@ -28,6 +28,7 @@ const TEMPLATE_DISPLAY_NAMES = {
   "nextjs-prisma": "Next.js + Prisma",
   "nextjs": "Next.js + Tailwind",
   "opennext-drizzle-cron": "OpenNext + Drizzle + Cron",
+  "react-router-v7": "React Router v7",
   "react-tailwind-chrome-extensions": "Chrome Extension (React + Tailwind)",
   "react-webpack-tailwind": "React + Webpack + Tailwind",
 };
