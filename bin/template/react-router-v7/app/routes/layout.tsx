@@ -4,6 +4,7 @@ import NProgress from "nprogress";
 import { useTranslation } from "react-i18next";
 import { Home, Table2, FileText, Lock, Languages } from "lucide-react";
 import { Button } from "~/components/ui/button";
+import { ThemeToggle } from "~/components/theme-toggle";
 import {
   Select,
   SelectContent,
@@ -79,6 +80,9 @@ export default function Layout() {
           </div>
 
           <div className="flex flex-1 items-center justify-end space-x-3">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             {/* 语言切换器 - 精致风格 */}
             <Select value={i18n.language} onValueChange={handleLanguageChange}>
               <SelectTrigger className="w-[130px] rounded-sm border-2">

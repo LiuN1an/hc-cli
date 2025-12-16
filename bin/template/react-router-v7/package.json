@@ -1,5 +1,5 @@
 {
-  "name": "react-router-fullstack-template",
+  "name": "offical-website",
   "private": true,
   "type": "module",
   "scripts": {
@@ -59,4 +59,3 @@
     "node": ">=20.0.0"
   }
 }
-

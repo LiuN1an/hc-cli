@@ -12,6 +12,7 @@ import { I18nextProvider, useTranslation } from "react-i18next";
 import type { Route } from "./+types/root";
 import "./app.css";
 import { Providers } from "./components/providers";
+import { ThemeProvider } from "./components/theme-provider";
 import i18n from "./lib/i18n";
 
 export const meta: Route.MetaFunction = () => {
@@ -49,13 +50,28 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const storageKey = 'vite-ui-theme';
+                const defaultTheme = 'dark';
+                try {
+                  const theme = localStorage.getItem(storageKey) || defaultTheme;
+                  document.documentElement.classList.add(theme);
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body className="paper-texture">
         <Providers>{children}</Providers>
         <Toaster
           toastOptions={{
             classNames: {
-              success: "!bg-primary text-primary-foreground !border-none font-serif",
+              success:
+                "!bg-primary text-primary-foreground !border-none font-serif",
             },
           }}
           position="top-center"
@@ -70,9 +86,11 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <I18nextProvider i18n={i18n}>
-      <InnerLayout>{children}</InnerLayout>
-    </I18nextProvider>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <I18nextProvider i18n={i18n}>
+        <InnerLayout>{children}</InnerLayout>
+      </I18nextProvider>
+    </ThemeProvider>
   );
 }
 
