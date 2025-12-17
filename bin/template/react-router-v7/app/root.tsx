@@ -42,6 +42,13 @@ export const links: Route.LinksFunction = () => [
 
 function InnerLayout({ children }: { children: React.ReactNode }) {
   const { i18n: i18nInstance } = useTranslation();
+  // 开发环境下动态加载 react-grab（在客户端执行，避免裸模块导入失败）
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    import("react-grab").catch((error) => {
+      console.warn("react-grab 加载失败", error);
+    });
+  }, []);
 
   return (
     <html lang={i18nInstance.language} suppressHydrationWarning>
