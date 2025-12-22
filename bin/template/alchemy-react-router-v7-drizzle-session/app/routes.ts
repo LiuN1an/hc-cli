@@ -2,7 +2,12 @@ import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 // 页面路由
 const pageRoutes = [
-  index("routes/home.tsx"),
+  route("/", "routes/layout.tsx", [
+    index("routes/home.tsx"),
+    route("table", "routes/table.tsx"),
+    route("form", "routes/form.tsx"),
+    route("protected", "routes/protected.tsx"),
+  ]),
   route("signup", "routes/signup.tsx"),
   route("signin", "routes/signin.tsx"),
   route("admin", "routes/admin.tsx"),

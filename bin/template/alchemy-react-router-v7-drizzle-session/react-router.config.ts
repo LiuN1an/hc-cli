@@ -97,7 +97,7 @@ const systemRoutes: RouteConfig = [
 export default {
   ssr: true,
   future: {
-    unstable_viteEnvironmentApi: true,
+    v8_viteEnvironmentApi: true,
     v8_middleware: true,
   },
   // 如果需要使用 routes 配置，取消下面的注释

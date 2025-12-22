@@ -5,6 +5,15 @@ import { useQueryState } from "nuqs";
 import type { Route } from "./+types/signin";
 import { EnvContext } from "~/context";
 import { handleLogin } from "~/features/auth";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 
 /**
  * 登录 Action
@@ -118,58 +127,44 @@ export default function SigninPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            登录账户
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl">登录账户</CardTitle>
+          <CardDescription>
             还没有账户？{" "}
-            <Link
-              to="/signup"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
+            <Link to="/signup" className="underline underline-offset-4">
               立即注册
             </Link>
-          </p>
-        </div>
-
-        <div className="mt-8 space-y-6">
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
                 邮箱地址
               </label>
-              <input
+              <Input
                 id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="请输入邮箱"
                 value={formData.email}
                 onChange={handleChange}
               />
             </div>
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium">
                 密码
               </label>
-              <input
+              <Input
                 id="password"
                 name="password"
                 type="password"
                 autoComplete="current-password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 placeholder="请输入密码"
                 value={formData.password}
                 onChange={handleChange}
@@ -178,28 +173,25 @@ export default function SigninPage() {
           </div>
 
           {actionData && !actionData.success && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{actionData.error}</div>
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4">
+              <div className="text-sm text-destructive">{actionData.error}</div>
             </div>
           )}
 
-          <button
+          <Button
             type="button"
             onClick={handleSubmit}
             disabled={isLoading}
-            className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full"
           >
             {isLoading ? "登录中..." : "登录"}
-          </button>
+          </Button>
 
-          <div className="text-center">
-            <p className="text-sm text-gray-600">测试账户:</p>
-            <p className="text-xs text-gray-500 mt-1">
-              邮箱: test@example.com | 密码: 123456
-            </p>
+          <div className="text-center text-xs text-muted-foreground">
+            <p>测试账户: test@example.com / 123456</p>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -12,6 +12,8 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import { createQueryClient } from "~/lib/react-query-config";
 import { Toaster } from "sonner";
+import { I18nextProvider } from "react-i18next";
+import i18n from "~/lib/i18n";
 
 import "./app.css";
 
@@ -26,13 +28,15 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,300..900;1,300..900&display=swap",
   },
 ];
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const htmlLang = i18n.language === "zh" ? "zh-CN" : "en";
+
   return (
-    <html lang="zh-CN">
+    <html lang={htmlLang}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -51,11 +55,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <NuqsAdapter>
-        <Outlet />
-        <ReactQueryDevtools initialIsOpen={false} />
-        <Toaster position="top-right" richColors closeButton duration={1500} />
-      </NuqsAdapter>
+      <I18nextProvider i18n={i18n}>
+        <NuqsAdapter>
+          <Outlet />
+          <ReactQueryDevtools initialIsOpen={false} />
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            duration={1500}
+          />
+        </NuqsAdapter>
+      </I18nextProvider>
     </QueryClientProvider>
   );
 }

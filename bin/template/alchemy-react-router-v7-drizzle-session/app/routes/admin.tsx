@@ -68,11 +68,11 @@ export default function Admin({ loaderData }: Route.ComponentProps) {
   // 未登录
   if (error === "unauthorized") {
     return (
-      <main className="flex items-center justify-center min-h-screen bg-slate-900">
-        <div className="text-center space-y-6 p-8">
-          <h1 className="text-2xl font-bold text-white">需要登录</h1>
-          <p className="text-slate-400">请先登录后再访问管理后台</p>
-          <p className="text-slate-500 text-sm">
+      <main className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-6 rounded-2xl border border-border/70 bg-card/80 p-8 shadow-[0_2px_0_rgba(30,30,30,0.08),0_12px_30px_rgba(30,30,30,0.08)]">
+          <h1 className="text-2xl font-bold">需要登录</h1>
+          <p className="text-muted-foreground">请先登录后再访问管理后台</p>
+          <p className="text-muted-foreground text-sm">
             或在请求头中携带 auth_token 进行验证
           </p>
           <Button asChild>
@@ -86,10 +86,10 @@ export default function Admin({ loaderData }: Route.ComponentProps) {
   // 没有权限
   if (error === "forbidden") {
     return (
-      <main className="flex items-center justify-center min-h-screen bg-slate-900">
-        <div className="text-center space-y-6 p-8">
-          <h1 className="text-2xl font-bold text-red-400">没有权限</h1>
-          <p className="text-slate-400">
+      <main className="flex items-center justify-center min-h-screen">
+        <div className="text-center space-y-6 rounded-2xl border border-border/70 bg-card/80 p-8 shadow-[0_2px_0_rgba(30,30,30,0.08),0_12px_30px_rgba(30,30,30,0.08)]">
+          <h1 className="text-2xl font-bold text-destructive">没有权限</h1>
+          <p className="text-muted-foreground">
             你没有访问管理后台的权限，当前角色：{user?.role}
           </p>
           <Button asChild variant="outline">
@@ -102,15 +102,15 @@ export default function Admin({ loaderData }: Route.ComponentProps) {
 
   // 管理后台主界面
   return (
-    <main className="min-h-screen bg-slate-900">
-      <header className="border-b border-slate-700 bg-slate-800/50">
+    <main className="min-h-screen">
+      <header className="border-b border-border/60 bg-card/70 backdrop-blur">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-white">🔧 管理后台</h1>
+          <h1 className="text-xl font-bold">🔧 管理后台</h1>
           <div className="flex items-center gap-4">
-            <span className="text-slate-400 text-sm">
+            <span className="text-muted-foreground text-sm">
               {user?.name} ({user?.role})
               {authType === "token" && (
-                <span className="ml-2 text-xs text-amber-400">[Token]</span>
+                <span className="ml-2 text-xs text-amber-600">[Token]</span>
               )}
             </span>
             <Button asChild variant="outline" size="sm">
@@ -123,9 +123,9 @@ export default function Admin({ loaderData }: Route.ComponentProps) {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* 用户管理卡片 */}
-          <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-            <h2 className="text-lg font-semibold text-white mb-2">👥 用户管理</h2>
-            <p className="text-slate-400 text-sm mb-4">
+          <div className="rounded-2xl border border-border/70 bg-card/80 p-6 shadow-[0_2px_0_rgba(30,30,30,0.08),0_12px_30px_rgba(30,30,30,0.08)]">
+            <h2 className="text-lg font-semibold mb-2">👥 用户管理</h2>
+            <p className="text-muted-foreground text-sm mb-4">
               管理系统用户，查看用户列表
             </p>
             <Button asChild variant="secondary" size="sm">
@@ -134,12 +134,12 @@ export default function Admin({ loaderData }: Route.ComponentProps) {
           </div>
 
           {/* 系统信息卡片 */}
-          <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-            <h2 className="text-lg font-semibold text-white mb-2">📊 系统信息</h2>
-            <p className="text-slate-400 text-sm mb-4">
+          <div className="rounded-2xl border border-border/70 bg-card/80 p-6 shadow-[0_2px_0_rgba(30,30,30,0.08),0_12px_30px_rgba(30,30,30,0.08)]">
+            <h2 className="text-lg font-semibold mb-2">📊 系统信息</h2>
+            <p className="text-muted-foreground text-sm mb-4">
               查看系统运行状态
             </p>
-            <div className="text-sm text-slate-300 space-y-1">
+            <div className="text-sm text-muted-foreground space-y-1">
               <p>用户 ID: {user?.id}</p>
               <p>邮箱: {user?.email}</p>
               <p>角色: {user?.role}</p>
@@ -148,9 +148,9 @@ export default function Admin({ loaderData }: Route.ComponentProps) {
           </div>
 
           {/* 快捷操作卡片 */}
-          <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
-            <h2 className="text-lg font-semibold text-white mb-2">⚡ 快捷操作</h2>
-            <p className="text-slate-400 text-sm mb-4">
+          <div className="rounded-2xl border border-border/70 bg-card/80 p-6 shadow-[0_2px_0_rgba(30,30,30,0.08),0_12px_30px_rgba(30,30,30,0.08)]">
+            <h2 className="text-lg font-semibold mb-2">⚡ 快捷操作</h2>
+            <p className="text-muted-foreground text-sm mb-4">
               常用功能入口
             </p>
             <div className="flex flex-col gap-2">
