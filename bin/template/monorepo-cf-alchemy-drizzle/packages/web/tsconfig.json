@@ -1,0 +1,21 @@
+{
+  "include": ["**/*", ".react-router/types/**/*"],
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "rootDirs": [".", "./.react-router/types"],
+    "types": ["@cloudflare/workers-types", "vite/client"],
+    "paths": {
+      "~/*": ["./app/*"]
+    }
+  }
+}

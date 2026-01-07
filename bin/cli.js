@@ -22,11 +22,14 @@ const DEFAULT_PROJECT_DIR = {
 
 // 模板显示名称映射
 const TEMPLATE_DISPLAY_NAMES = {
-  "alchemy-react-router-v7-drizzle-session": "Alchemy + React Router v7 + Drizzle + Session",
+  "alchemy-react-router-v7-drizzle-session":
+    "Alchemy + React Router v7 + Drizzle + Session",
   "cloudflare-commerce": "Cloudflare Commerce (Next.js)",
   "electron-react": "Electron + React",
+  "monorepo-cf-alchemy-drizzle":
+    "Monorepo + React Router 7 + Alchemy + Drizzle",
   "nextjs-prisma": "Next.js + Prisma",
-  "nextjs": "Next.js + Tailwind",
+  nextjs: "Next.js + Tailwind",
   "opennext-drizzle-cron": "OpenNext + Drizzle + Cron",
   "react-router-v7": "React Router v7",
   "react-tailwind-chrome-extensions": "Chrome Extension (React + Tailwind)",
@@ -73,7 +76,9 @@ const getDefaultProjectDir = () => {
   if (config.defaultDir) {
     return config.defaultDir;
   }
-  return DEFAULT_PROJECT_DIR[process.platform] || path.join(os.homedir(), "Projects");
+  return (
+    DEFAULT_PROJECT_DIR[process.platform] || path.join(os.homedir(), "Projects")
+  );
 };
 
 // ==================== 工具函数 ====================
@@ -110,7 +115,9 @@ const copyFileSync = (source, target) => {
  * 递归复制目录
  */
 const copySync = (source, target, isRoot = true) => {
-  const targetFolder = isRoot ? target : path.join(target, path.basename(source));
+  const targetFolder = isRoot
+    ? target
+    : path.join(target, path.basename(source));
 
   if (!isRoot && !fs.existsSync(targetFolder)) {
     fs.mkdirSync(targetFolder, { recursive: true });
@@ -241,7 +248,9 @@ program
   .option("-d, --dir <directory>", "项目创建目录（不指定则使用默认目录）")
   .action(async (options) => {
     // 确定目标目录
-    const targetDir = options.dir ? path.resolve(options.dir) : getDefaultProjectDir();
+    const targetDir = options.dir
+      ? path.resolve(options.dir)
+      : getDefaultProjectDir();
 
     // 确保目标目录存在
     if (!fs.existsSync(targetDir)) {

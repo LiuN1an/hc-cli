@@ -1,0 +1,24 @@
+{
+  "name": "monorepo-template",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @template/web dev",
+    "build": "pnpm --filter @template/web build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "db:generate": "pnpm --filter @template/shared db:generate",
+    "db:migrate": "pnpm --filter @template/web db:migrate",
+    "db:seed": "pnpm --filter @template/web db:seed",
+    "wrangler:generate": "node scripts/generate-wrangler.js",
+    "deploy:web": "pnpm --filter @template/web deploy",
+    "deploy:worker": "pnpm --filter @template/cf-worker deploy"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

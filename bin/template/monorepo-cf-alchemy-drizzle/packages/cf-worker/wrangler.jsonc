@@ -1,0 +1,57 @@
+// Auto-generated wrangler configuration for cf-worker
+// DO NOT EDIT DIRECTLY - run `pnpm wrangler:generate` to regenerate
+// Base configuration: ../wrangler.base.jsonc
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "template-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-12-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Scheduled triggers
+  "triggers": {
+    "crons": ["0 6 * * *"]
+  },
+
+  // Database binding (shared with web)
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "template-db",
+      "database_id": "YOUR_DATABASE_ID"
+    }
+  ],
+
+  // Worker-specific environment variables
+  "vars": {
+    "WORKER_ENABLED": "true"
+  },
+
+  // Environment overrides
+  "env": {
+    "staging": {
+      "vars": {
+        "WORKER_ENABLED": "true"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "template-db-staging",
+          "database_id": "YOUR_STAGING_DATABASE_ID"
+        }
+      ]
+    },
+    "production": {
+      "vars": {
+        "WORKER_ENABLED": "true"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "template-db-production",
+          "database_id": "YOUR_PRODUCTION_DATABASE_ID"
+        }
+      ]
+    }
+  }
+}

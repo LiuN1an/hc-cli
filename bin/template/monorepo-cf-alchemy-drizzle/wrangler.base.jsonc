@@ -1,0 +1,41 @@
+// Base wrangler configuration
+// This file contains shared configuration that can be extended by each package
+// Run `pnpm wrangler:generate` to generate package-specific wrangler.jsonc files
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  // Shared compatibility settings
+  "compatibility_date": "2024-12-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Shared database binding - all packages share the same D1
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "template-db",
+      "database_id": "YOUR_DATABASE_ID"
+    }
+  ],
+
+  // Environment configurations
+  "env": {
+    "staging": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "template-db-staging",
+          "database_id": "YOUR_STAGING_DATABASE_ID"
+        }
+      ]
+    },
+    "production": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "template-db-production",
+          "database_id": "YOUR_PRODUCTION_DATABASE_ID"
+        }
+      ]
+    }
+  }
+}
