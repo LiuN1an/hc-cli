@@ -1,0 +1,2 @@
+# Migrations will be generated here by drizzle-kit
+# Run: pnpm db:generate

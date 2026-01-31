@@ -1,0 +1,41 @@
+{
+  "name": "myapp-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "pnpm --filter @myapp/web dev",
+    "build": "pnpm --filter @myapp/web build",
+    "deploy": "pnpm --filter @myapp/web deploy",
+    "typecheck": "pnpm --recursive typecheck",
+
+    "dev:web": "pnpm --filter @myapp/web dev",
+    "build:web": "pnpm --filter @myapp/web build",
+    "deploy:web": "pnpm --filter @myapp/web deploy",
+
+    "dev:api": "pnpm --filter @myapp/api dev",
+    "build:api": "pnpm --filter @myapp/api build",
+    "deploy:api": "pnpm --filter @myapp/api deploy",
+
+    "dev:worker": "pnpm --filter @myapp/worker dev",
+    "deploy:worker": "pnpm --filter @myapp/worker deploy",
+
+    "db:generate": "pnpm --filter @myapp/shared build && pnpm --filter @myapp/web db:generate",
+    "db:studio": "pnpm --filter @myapp/web db:studio"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@tailwindcss/oxide",
+      "better-sqlite3",
+      "esbuild",
+      "workerd"
+    ],
+    "overrides": {
+      "drizzle-orm": "^0.44.5"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@myapp/worker",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev --persist-to=../../.alchemy/miniflare",
+    "dev:isolated": "wrangler dev",
+    "deploy": "wrangler deploy --env production",
+    "typecheck": "tsc --noEmit",
+    "health": "curl -s http://localhost:8787/health | jq .",
+    "trigger": "curl -s http://localhost:8787/trigger | jq ."
+  },
+  "dependencies": {
+    "@myapp/shared": "workspace:*",
+    "drizzle-orm": "^0.44.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251011.0",
+    "typescript": "^5.8.3",
+    "wrangler": "^4.21.0"
+  }
+}

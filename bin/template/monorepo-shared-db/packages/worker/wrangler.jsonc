@@ -1,0 +1,62 @@
+/**
+ * Wrangler configuration for worker
+ *
+ * This worker uses native Wrangler (not Alchemy) but shares the same D1 database
+ * with the Alchemy-managed packages (web, api).
+ *
+ * Key points:
+ * - Uses --persist-to=../../.alchemy/miniflare for local dev to share database
+ * - Production: uses same database_id as web package's D1
+ */
+{
+  "name": "myapp-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-12-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // D1 Database binding (shared with web/api packages)
+  // Local dev: Uses local database name, synced via --persist-to
+  // Production: Override database_id in env.production
+  "d1_databases": [
+    {
+      "binding": "DB",
+      // For local development, this name will be matched against the Alchemy database
+      "database_name": "web-web-db-development",
+      "database_id": "web-web-db-development",
+      // Use migrations from web package
+      "migrations_dir": "../web/drizzle/migrations"
+    }
+  ],
+
+  // Environment variables
+  "vars": {
+    "WORKER_ENABLED": "true"
+  },
+
+  // Environment-specific overrides
+  "env": {
+    "production": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "web-web-db-production",
+          // Replace with actual D1 database UUID from Cloudflare dashboard
+          "database_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        }
+      ],
+      "vars": {
+        "WORKER_ENABLED": "true"
+      }
+    }
+  },
+
+  // Observability
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    }
+  }
+}

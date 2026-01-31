@@ -1,0 +1,37 @@
+{
+  "name": "@myapp/api",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "react-router build",
+    "deploy": "ALCHEMY_ENV=production alchemy deploy",
+    "destroy": "alchemy destroy",
+    "dev": "alchemy dev",
+    "typecheck": "react-router typegen && tsc -b"
+  },
+  "dependencies": {
+    "@myapp/shared": "workspace:*",
+    "drizzle-orm": "^0.44.5",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-router": "^7.9.1"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.0.12",
+    "@cloudflare/workers-types": "^4.20251011.0",
+    "@react-router/dev": "^7.9.1",
+    "@tailwindcss/vite": "^4.1.4",
+    "@types/node": "^20",
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "alchemy": "0.83.1",
+    "dotenv": "^17.2.2",
+    "miniflare": "^4.20250617.3",
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "wrangler": "^4.20.5"
+  }
+}
